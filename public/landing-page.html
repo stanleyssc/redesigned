@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Naija Game Hub</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: #f7f7f7;
+            position: relative;
+        }
+        .game-select {
+            text-align: center;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .game-select h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        .game-select button {
+            margin: 10px;
+            padding: 15px 30px;
+            font-size: 18px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .btn-slot {
+            background-color: #007bff;
+            color: #fff;
+        }
+        .btn-whots {
+            background-color: #28a745;
+            color: #fff;
+        }
+        .btn-logout {
+            background-color: #dc3545;
+            color: #fff;
+        }
+        .game-select button:hover {
+            opacity: 0.9;
+        }
+        #user-info {
+            position: absolute;
+            top: 10px;height: auto;
+            color: white;
+            right: 10px;
+            font-size: 16px;
+            background: #060124;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        #user-info span {
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="user-info"></div>
+    <div class="game-select">
+        <h1>Welcome to Naija Game Hub</h1>
+        <button class="btn-slot">Play Slot Game</button>
+        <button class="btn-whots">Play Whots</button>
+        <button class="btn-logout">Logout</button>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const btnSlot = document.querySelector('.btn-slot');
+            const btnWhots = document.querySelector('.btn-whots');
+            const btnLogout = document.querySelector('.btn-logout');
+
+            // Fetch and display user info
+            const displayUserInfo = () => {
+                const token = localStorage.getItem('token');
+
+                if (!token) {
+                    console.log('No token found');
+                    return;
+                }
+
+                fetch('https://slotgame-backend.onrender.com/user-info', {
+                    method: 'GET',
+                    headers: {
+                        Authorization: token,
+                        'Content-Type': 'application/json',
+                    },
+                })
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch user info');
+                    }
+                    return response.json();
+                })
+                .then((data) => {
+                    const userInfoDiv = document.getElementById('user-info');
+                    userInfoDiv.innerHTML = `Welcome, ${data.username} <br>
+                        Account Balance: ₦${data.balance}
+                    `;
+                })
+                .catch((error) => {
+                    console.error('Error fetching user info:', error);
+                });
+            };
+
+            displayUserInfo();
+
+            btnSlot.addEventListener('click', () => {
+                window.location.href = 'slot.html';
+            });
+
+            btnWhots.addEventListener('click', () => {
+                window.location.href = '#'; 
+            });
+
+            btnLogout.addEventListener('click', () => {
+                localStorage.removeItem('token'); 
+                window.location.href = 'index.html'; 
+            });
+        });
+    </script>
+</body>
+</html>

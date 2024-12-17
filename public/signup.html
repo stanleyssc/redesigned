@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Sign Up</h1>
+    <form id="signupForm">
+      <label for="signupUsername">Username</label>
+      <input type="text" id="signupUsername" placeholder="Create a username" required>
+      
+      <label for="signupPassword">Password</label>
+      <input type="password" id="signupPassword" placeholder="Create a password" required>
+      
+      <label for="signupEmail">Email</label>
+      <input type="email" id="signupEmail" placeholder="Enter your email">
+      
+      <label for="signupPhoneNumber">Phone Number</label>
+      <input type="text" id="signupPhoneNumber" placeholder="Enter your phone number">
+      
+      <button type="submit">Sign Up</button>
+    </form>
+    <p>Already have an account? <a href="index.html">Log in here</a>.</p>
+    <p id="statusMessage"></p> <!-- To display success or error messages -->
+  </div>
+
+  <script>
+    const signupForm = document.getElementById('signupForm');
+    const statusMessage = document.getElementById('statusMessage');
+
+    signupForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const username = document.getElementById('signupUsername').value;
+      const password = document.getElementById('signupPassword').value;
+      const email = document.getElementById('signupEmail').value;
+      const phoneNumber = document.getElementById('signupPhoneNumber').value;
+
+      // Ensure at least one of email or phone number is provided
+      if (!email && !phoneNumber) {
+        return alert('Please provide at least one of email or phone number');
+      }
+
+      const userData = { username, password, email, phoneNumber };
+
+      fetch('https://slotgame-backend.onrender.com/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userData)
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.error) {
+            statusMessage.textContent = `Error: ${data.error}`;
+            statusMessage.style.color = 'red';
+          } else {
+            statusMessage.textContent = 'Signup successful! Redirecting to your dashboard...';
+            statusMessage.style.color = 'green';
+
+            // Automatically log the user in after successful registration
+            return fetch('https://slotgame-backend.onrender.com/login', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ username, password })
+            });
+          }
+        })
+        .then((loginResponse) => {
+          if (loginResponse.ok) {
+            return loginResponse.json();
+          } else {
+            throw new Error('Login failed after signup');
+          }
+        })
+        .then((loginData) => {
+          // Store the token (optional: in localStorage or sessionStorage)
+          localStorage.setItem('token', loginData.token);
+
+          // Redirect to the landing page
+          window.location.href = 'landing-page.html';
+        })
+        .catch((error) => {
+          console.error('Error during signup or login:', error);
+          statusMessage.textContent = 'An error occurred. Please try again.';
+          statusMessage.style.color = 'red';
+        });
+    });
+  </script>
+</body>
+</html>

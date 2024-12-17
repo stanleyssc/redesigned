@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Log In</h1>
+    <form id="loginForm">
+      <label for="loginUsername">Username, Email or Phone Number</label>
+      <input type="text" id="loginUsername" placeholder="Enter your username, email, or phone number" required>
+      
+      <label for="loginPassword">Password</label>
+      <input type="password" id="loginPassword" placeholder="Enter your password" required>
+      
+      <button type="submit">Log In</button>
+    </form>
+    <p>Don't have an account? <a href="signup.html">Sign up here</a>.</p>
+    <p id="statusMessage"></p> <!-- This will display any error or success messages -->
+  </div>
+
+  <script>
+    const loginForm = document.getElementById('loginForm');
+    const statusMessage = document.getElementById('statusMessage'); // For status messages
+
+    loginForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const username = document.getElementById('loginUsername').value;
+      const password = document.getElementById('loginPassword').value;
+
+      // Clear previous status messages
+      statusMessage.textContent = '';
+
+      // Make the API call to login
+      fetch('https://slotgame-backend.onrender.com/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.token) {
+            // Store the token in localStorage
+            localStorage.setItem('token', data.token);
+
+            // Display success message
+            statusMessage.textContent = 'Login successful! Redirecting...';
+            statusMessage.style.color = 'green';
+
+            // Redirect after a brief moment
+            setTimeout(() => {
+              window.location.href = 'landing-page.html'; // Redirect to the main page
+            }, 1000); // Delay redirect by 1 second for better UX
+          } else {
+            // If no token, it means login failed
+            statusMessage.textContent = 'Invalid username, email, or phone number.';
+            statusMessage.style.color = 'red';
+          }
+        })
+        .catch((error) => {
+          console.error('Error logging in:', error);
+          statusMessage.textContent = 'An error occurred. Please try again later.';
+          statusMessage.style.color = 'red';
+        });
+    });
+  </script>
+</body>
+</html>
