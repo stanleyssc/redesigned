@@ -14,7 +14,7 @@ const PORT = process.env.PORT || 3000;
 app.use(bodyParser.json());
 app.use(
   cors({
-    origin: 'https://naijagamer.netlify.app',
+    origin: 'http://127.0.0.1:5501',
     methods: ['GET', 'POST'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   })

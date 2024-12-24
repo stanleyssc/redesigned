@@ -1,7 +1,7 @@
 let currentPanelCount =4; 
 let gameInPlay = false;
 let holder = [];
-let spinSpeed = 10;
+let spinSpeed = 7;
 let userBalance = 1000; 
 let selectedBet = null;
 const spinButton = document.querySelector('.spin-button');
@@ -14,7 +14,7 @@ let serverResponse = [];
 let isSpinning = true;
 userWelcome = document.getElementById('welcome-message');
 
-const cardSet = [
+let cardSet = [
   "circle_1.png", "circle_2.png", "circle_3.png", "circle_4.png", "circle_5.png",
   "circle_7.png", "circle_8.png", "circle_10.png", "circle_11.png", "circle_12.png",
   "circle_13.png", "circle_14.png", "triangle_1.png", "triangle_2.png", "triangle_3.png",
@@ -26,6 +26,8 @@ const cardSet = [
   "star_1.png", "star_2.png", "star_3.png", "star_4.png", "star_5.png", "star_7.png",
   "star_8.png", "whot_20.png",
 ];
+
+
 
 
 document.addEventListener("DOMContentLoaded", function () { 

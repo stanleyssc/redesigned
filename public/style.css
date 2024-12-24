@@ -306,3 +306,14 @@ body {
 .logout-button:hover {
   background-color: #cc0000;
 }
+
+.winners-banner{
+  padding: 10px;
+  height: 7dvh;
+  background-color: gold;
+  color: black;
+  font-size: 1.2em;
+  width: 105dvw;
+  z-index: 9999;
+  overflow: hidden;
+}
