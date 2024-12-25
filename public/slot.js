@@ -145,28 +145,29 @@ function updateBalanceDisplay() {
     });
   }
 
-  // Initialize panels 
-  function init() {
+function init() {
     const slotDisplay = document.querySelector(".slot-display");
 
     slotDisplay.innerHTML = "";
-   const shuffledCards = shuffle([...cardSet]);
 
-  for (let i = 0; i < currentPanelCount; i++) {
-    panel[i] = makeElement(slotDisplay, "div", "panel");
-    const wheel = makeElement(panel[i], "div", "wheel");
+    for (let i = 0; i < currentPanelCount; i++) {
+        panel[i] = makeElement(slotDisplay, "div", "panel");
+        const wheel = makeElement(panel[i], "div", "wheel");
 
-    shuffledCards.forEach((card) => {
-      const cardContainer = makeElement(wheel, "div", "card-container");
-      const cardDiv = makeElement(cardContainer, "div", "card");
-      const img = document.createElement("img");
-      img.src = `cards/${card}`;
-      img.alt = card;
-      cardDiv.append(img);
-    });
-  }
+        // Shuffle cards individually for each panel
+        const shuffledCards = shuffle([...cardSet]);
 
-  applyStyles();
+        shuffledCards.forEach((card) => {
+            const cardContainer = makeElement(wheel, "div", "card-container");
+            const cardDiv = makeElement(cardContainer, "div", "card");
+            const img = document.createElement("img");
+            img.src = `cards/${card}`;
+            img.alt = card;
+            cardDiv.append(img);
+        });
+    }
+
+    applyStyles();
 }
 
   init();
