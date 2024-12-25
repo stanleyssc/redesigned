@@ -9,12 +9,14 @@ require('dotenv').config();
 const app = express();
 app.use(express.json()); 
 
+// Middleware
 app.use(
   cors({
-    origin: 'https://naijagamer.netlify.app'
+    origin: 'https://naijagamer.netlify.app',
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   })
 );
-
 
 // 1. Database Connection Handling - Using MySQL Connection Pool
 const db = mysql.createPool({
@@ -45,15 +47,6 @@ const authenticate = (req, res, next) => {
     next();
   });
 };
-
-// Middleware
-app.use(
-  cors({
-    origin: 'https://naijagamer.netlify.app',
-    methods: ['GET', 'POST'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-  })
-);
 
 const generateToken = (userId) => {
   return jwt.sign(
