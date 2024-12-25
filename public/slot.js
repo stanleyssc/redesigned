@@ -426,39 +426,59 @@ function getToken() {
 };
 
 async function saveGameOutcome(user_id, betAmount, numberOfPanels, outcome, payout, jackpot_type) {
-  const token = getToken();
-  try {
-      const response = await fetch(
-        "https://slot-backend-f32n.onrender.com/outcome",
-        {
-          method: "POST",
-          headers: {
-            Authorization: token,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            user_id: user_id,
-            betAmount: betAmount,
-            currentPanelCount: numberOfPanels,
-            holder: outcome,
-            payout: payout,
-            jackpot_type: jackpot_type,
-          }),
+    const token = getToken();
+    if (!token) {
+        console.error("Token not found. User might not be logged in.");
+        updateMessage('Your session has expired. Please log in again.', true);
+        return;
+    }
+
+    // Prepare the data to be sent
+    const requestData = {
+        user_id,
+        betAmount,
+        numberOfPanels,
+        holder: outcome,
+        payout,
+        jackpot_type,
+    };
+
+    // Log the request data to the console
+    console.log("Data being sent to backend:", requestData);
+
+    try {
+        const response = await fetch("https://slot-backend-f32n.onrender.com/outcome", {
+            method: "POST",
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(requestData),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error("Failed to save game outcome:", errorData);
+            throw new Error(errorData.message || response.statusText);
         }
-      );
 
-      if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(`Failed to save game outcome: ${errorData.message || response.statusText}`);
-      };
-  
-      const data = await response.json();
+        const data = await response.json();
 
-      const balance_After = data.balance_after_spin;
-  } catch (error) {
-      throw error;
-  }
+        // Check if the backend returned the updated balance
+        if (data.balance_after_spin !== undefined) {
+            userBalance = data.balance_after_spin;
+            updateBalanceDisplay();
+        } else {
+            console.warn("balance_after_spin not found in the response:", data);
+        }
+
+        console.log("Game outcome saved successfully:", data);
+    } catch (error) {
+        console.error("Error saving game outcome:", error);
+        updateMessage('Failed to save game outcome. Please try again.', true);
+    }
 }
+
 
 function playSound() {
   const sound = new Audio('sprites/sound.mp3');
