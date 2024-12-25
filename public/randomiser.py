@@ -1,6 +1,8 @@
+# pylint: disable=missing-module-docstring
+import secrets
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import secrets
+
 
 
 app = Flask(__name__)
@@ -32,7 +34,9 @@ def get_cards():
         return jsonify({"cards": selected_cards})
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        # Return error details in case of exception
+        return jsonify({"error": "Server error", "details": str(e)}), 500
 
+# Main entry point for local testing
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)
