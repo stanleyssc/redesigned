@@ -1,12 +1,10 @@
-# pylint: disable=missing-module-docstring
 import secrets
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
-
-
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+app.config['DEBUG'] = False
+CORS(app)
 
 cardSet = [
     "circle_1.png", "circle_2.png", "circle_3.png", "circle_4.png", "circle_5.png",
@@ -21,6 +19,10 @@ cardSet = [
     "star_8.png", "whot_20.png",
 ]
 
+@app.route('/')
+def home():
+    return "Welcome to the Randomiser App!"
+
 @app.route('/getCards', methods=['POST'])
 def get_cards():
     try:
@@ -34,9 +36,7 @@ def get_cards():
         return jsonify({"cards": selected_cards})
 
     except Exception as e:
-        # Return error details in case of exception
         return jsonify({"error": "Server error", "details": str(e)}), 500
 
-# Main entry point for local testing
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000)
