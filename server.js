@@ -7,9 +7,9 @@ const bcrypt = require('bcrypt');
 require('dotenv').config();
 
 const app = express();
-app.use(express.json()); 
+app.use(express.json());
 
-// Homepage endpoint to check if server is live
+// Homepage endpoint to check if the server is live
 app.get('/', (req, res) => {
   res.status(200).json({
     status: 'success',
@@ -19,7 +19,7 @@ app.get('/', (req, res) => {
 
 // 1. Database Connection Handling - Using MySQL Connection Pool
 const db = mysql.createPool({
-  connectionLimit: 50, // Set an appropriate connection limit
+  connectionLimit: 50,
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
@@ -42,25 +42,27 @@ const authenticate = (req, res, next) => {
     if (err) {
       return res.status(401).json({ error: 'Invalid token' });
     }
-    req.user_id = decoded.user_id; // Attach user ID to the request object
+    req.user_id = decoded.user_id;
     next();
   });
 };
 
 // Middleware
-app.use(
-  cors({
-    origin: 'https://naijagamer.netlify.app',
-    methods: ['GET', 'POST'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-  })
-);
+app.use(cors({
+  origin: [
+    'http://localhost:3000',
+    'http://127.0.0.1:5500',
+    'https://naijagamer.netlify.app',
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
 
 const generateToken = (userId) => {
   return jwt.sign(
-    { user_id: userId }, 
-    'secretkey',   
-    { expiresIn: '24h' }  
+    { user_id: userId },
+    process.env.JWT_SECRET,
+    { expiresIn: '24h' }
   );
 };
 
@@ -75,10 +77,9 @@ app.post('/register', async (req, res) => {
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Insert user data into the database
     db.query(
       'INSERT INTO users (username, password, balance, email, phone_number) VALUES (?, ?, ?, ?, ?)',
-      [username, hashedPassword, 1000, email, phone_number], 
+      [username, hashedPassword, 1000, email, phone_number],
       (err, result) => {
         if (err) {
           if (err.code === 'ER_DUP_ENTRY') {
@@ -88,7 +89,6 @@ app.post('/register', async (req, res) => {
           return res.status(500).json({ error: 'Error registering user' });
         }
 
-        // Generate a token after successful registration
         const token = generateToken(result.insertId);
         res.status(201).json({ message: 'User registered successfully', token });
       }
@@ -119,7 +119,6 @@ app.post('/login', (req, res) => {
       }
 
       const token = generateToken(user.user_id);
-      // Return both token and username
       res.status(200).json({ token, username: user.username });
     });
   });
@@ -127,110 +126,80 @@ app.post('/login', (req, res) => {
 
 // Get and update user balance
 app.route('/balance')
-  .get((req, res) => {
-    const token = req.headers['authorization'];
-
-    if (!token) {
-      return res.status(401).json({ error: 'No token provided' });
-    }
-
-    jwt.verify(token, 'secretkey', (err, decoded) => {
-      if (err) {
-        return res.status(401).json({ error: 'Invalid token' });
+  .get(authenticate, (req, res) => {
+    db.query('SELECT balance FROM users WHERE user_id = ?', [req.user_id], (err, result) => {
+      if (err || result.length === 0) {
+        console.error('Error fetching balance or user not found:', err);
+        return res.status(500).json({ error: 'Error fetching balance' });
       }
-
-      db.query('SELECT balance FROM users WHERE user_id = ?', [decoded.user_id], (err, result) => {  
-        if (err || result.length === 0) {
-          console.error('Error fetching balance or user not found:', err);
-          return res.status(500).json({ error: 'Error fetching balance' });
-        }
-        res.status(200).json({ balance: result[0].balance });
-      });
+      res.status(200).json({ balance: result[0].balance });
     });
   })
-  .post((req, res) => {
+  .post(authenticate, (req, res) => {
     const { balance } = req.body;
-    const token = req.headers['authorization'];
 
-    if (!token) {
-      return res.status(401).json({ error: 'No token provided' });
-    }
     if (balance === undefined || isNaN(balance)) {
       return res.status(400).json({ error: 'Valid balance value required' });
     }
-    jwt.verify(token, 'secretkey', (err, decoded) => {
-      if (err) {
-        return res.status(401).json({ error: 'Invalid token' });
-      }
 
-      db.query('UPDATE users SET balance = ? WHERE user_id = ?', [balance, decoded.user_id], (err, result) => {
-        if (err) {
-          console.error('Error updating balance:', err);
-          return res.status(500).json({ error: 'Error updating balance' });
-        }
-        if (result.affectedRows === 0) {
-          return res.status(404).json({ error: 'User not found' });
-        }
-        res.status(200).json({ message: 'Balance updated successfully' });
-      });
+    db.query('UPDATE users SET balance = ? WHERE user_id = ?', [balance, req.user_id], (err, result) => {
+      if (err) {
+        console.error('Error updating balance:', err);
+        return res.status(500).json({ error: 'Error updating balance' });
+      }
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      res.status(200).json({ message: 'Balance updated successfully' });
     });
   });
 
 // Store game outcome
-app.post('/outcome', (req, res) => {
-  const token = req.headers['authorization'];
+app.post('/outcome', authenticate, (req, res) => {
   const { betAmount, numberOfPanels, outcome, payout, jackpot_type } = req.body;
 
-  if (!token) {
-    return res.status(401).json({ error: 'No token provided' });
+  if (!betAmount || !numberOfPanels || !outcome || payout === undefined) {
+    return res.status(400).json({ error: 'All game outcome fields are required' });
   }
 
-  jwt.verify(token, 'secretkey', (err, decoded) => {
-    if (err) {
-      return res.status(401).json({ error: 'Invalid token' });
+  db.query('SELECT balance FROM users WHERE user_id = ?', [req.user_id], (err, result) => {
+    if (err || result.length === 0) {
+      return res.status(500).json({ error: 'Error fetching balance' });
+    }
+    const currentBalance = result[0].balance;
+    const balanceAfter = currentBalance + payout - betAmount;
+
+    if (betAmount > currentBalance) {
+      return res.status(400).json({ error: 'Insufficient balance' });
     }
 
-    // Fetch current balance
-    db.query('SELECT balance FROM users WHERE user_id = ?', [decoded.user_id], (err, result) => {  
-      if (err || result.length === 0) {
-        return res.status(500).json({ error: 'Error fetching balance' });
+    const query = `
+      INSERT INTO game_outcomes (user_id, bet_amount, panels, outcome, payout, balance_after, jackpot_type, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+    const values = [req.user_id, betAmount, numberOfPanels, JSON.stringify(outcome), payout, balanceAfter, jackpot_type, new Date()];
+
+    db.query(query, values, (err) => {
+      if (err) {
+        return res.status(500).json({ error: 'Error logging game outcome' });
       }
-      const currentBalance = result[0].balance;
-      const balanceAfter = currentBalance + payout - betAmount;
 
-      if (betAmount > currentBalance) {
-        return res.status(400).json({ error: 'Insufficient balance' });
-      };
+      db.query('UPDATE users SET balance = ? WHERE user_id = ?', [balanceAfter, req.user_id], (err) => {
+        if (err) {
+          console.error('Error updating user balance:', err);
+          return res.status(500).json({ error: 'Error updating user balance' });
+        }
 
-// Log game outcome
-const query = `
-  INSERT INTO game_outcomes (user_id, bet_amount, panels, outcome, payout, balance_after, jackpot_type, created_at)
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-`;
-const values = [decoded.user_id, betAmount, numberOfPanels, JSON.stringify(outcome), payout, balanceAfter, jackpot_type, new Date()];
-
-db.query(query, values, (err) => {
-  if (err) {
-    return res.status(500).json({ error: 'Error logging game outcome' });
-  }
-
-  // Update user balance
-  db.query('UPDATE users SET balance = ? WHERE user_id = ?', [balanceAfter, decoded.user_id], (err) => {
-    if (err) {
-      console.error('Error updating user balance:', err);
-      return res.status(500).json({ error: 'Error updating user balance' });
-    }
-    
-    res.status(200).json({
-      message: 'Game outcome processed successfully',
-      balanceAfter,
-          });
+        res.status(200).json({
+          message: 'Game outcome processed successfully',
+          balanceAfter,
         });
       });
     });
   });
 });
 
+// Fetch recent winners
 app.get('/winners', (req, res) => {
   const query = `
     SELECT users.username, game_outcomes.jackpot_type, game_outcomes.payout, game_outcomes.created_at
@@ -254,41 +223,22 @@ app.get('/winners', (req, res) => {
   });
 });
 
-
-// Add user-info endpoint
-app.get('/user-info', (req, res) => {
-  const token = req.headers['authorization'];
-
-  if (!token) {
-    return res.status(401).json({ error: 'No token provided' });
-  }
-
-  jwt.verify(token, 'secretkey', (err, decoded) => {
-    if (err) {
-      return res.status(401).json({ error: 'Invalid token' });
+// Fetch user info
+app.get('/user-info', authenticate, (req, res) => {
+  db.query('SELECT username, balance FROM users WHERE user_id = ?', [req.user_id], (err, result) => {
+    if (err || result.length === 0) {
+      console.error('Error fetching user info or user not found:', err);
+      return res.status(500).json({ error: 'Error fetching user info' });
     }
-
-    db.query(
-      'SELECT username, balance FROM users WHERE user_id = ?',
-      [decoded.user_id],
-      (err, result) => {
-        if (err || result.length === 0) {
-          console.error('Error fetching user info or user not found:', err);
-          return res.status(500).json({ error: 'Error fetching user info' });
-        }
-        res.status(200).json({
-          username: result[0].username,
-          balance: result[0].balance,
-        });
-      }
-    );
+    res.status(200).json({
+      username: result[0].username,
+      balance: result[0].balance,
+    });
   });
 });
 
-const PORT = process.env.PORT || 3000; // Set to 3000 if PORT is not defined in .env
+const PORT = process.env.PORT || 3000;
 
-
-// Start server
 app.listen(PORT, () => {
   console.log(`Server is running on ${PORT}`);
 });
