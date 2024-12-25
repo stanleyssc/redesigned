@@ -12,7 +12,7 @@ const cardHeight = 130;
 let game = { ani: null };
 let serverResponse = [];
 let isSpinning = true;
-userWelcome = document.getElementById('welcome-message');
+userWelcome = document.getElementById('.welcome-message');
 
 let cardSet = [
   "circle_1.png", "circle_2.png", "circle_3.png", "circle_4.png", "circle_5.png",
