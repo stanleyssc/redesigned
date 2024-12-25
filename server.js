@@ -9,13 +9,12 @@ require('dotenv').config();
 const app = express();
 app.use(express.json()); 
 
-// Homepage endpoint to check if server is live
-app.get('/', (req, res) => {
-  res.status(200).json({
-    status: 'success',
-    message: 'Server is live and running!',
-  });
-});
+app.use(
+  cors({
+    origin: 'https://naijagamer.netlify.app'
+  })
+);
+
 
 // 1. Database Connection Handling - Using MySQL Connection Pool
 const db = mysql.createPool({
