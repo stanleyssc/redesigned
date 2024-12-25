@@ -68,6 +68,47 @@ document.addEventListener("DOMContentLoaded", function () {
   }); 
 });
 
+// Fetch and update user details
+async function updateUserDetails() {
+    try {
+        const response = await fetch('https://slot-backend-f32n.onrender.com/user-info', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${getToken()}`,
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch user details: ' + response.statusText);
+        }
+
+        const data = await response.json();
+
+        // Update username
+        if (data.username) {
+            userWelcome.textContent = `Welcome, ${data.username}`;
+        }
+
+        // Update balance
+        if (data.balance !== undefined) {
+            userBalance = data.balance;
+            updateBalanceDisplay();
+        }
+    } catch (error) {
+        console.error('Error fetching user details:', error);
+        updateMessage('Failed to fetch user details. Please refresh the page.', true);
+    }
+}
+
+// Update balance display
+function updateBalanceDisplay() {
+    const balanceElement = document.querySelector('.account-balance');
+    if (balanceElement) {
+        balanceElement.textContent = `Balance: ₦${userBalance}`;
+    }
+}
+
   // Utility function to create elements
   function makeElement(parent, element, myClass) {
     const el = document.createElement(element);
