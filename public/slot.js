@@ -2,7 +2,7 @@ let currentPanelCount =4;
 let gameInPlay = false;
 let holder = [];
 let spinSpeed = 7;
-let userBalance = 0; 
+let userBalance = 10000; 
 let selectedBet = null;
 const spinButton = document.querySelector('.spin-button');
 const betButtons = document.querySelectorAll('.bet-button');
@@ -150,23 +150,24 @@ function updateBalanceDisplay() {
     const slotDisplay = document.querySelector(".slot-display");
 
     slotDisplay.innerHTML = "";
+   const shuffledCards = shuffle([...cardSet]);
 
-    for (let i = 0; i < currentPanelCount; i++) {
-      panel[i] = makeElement(slotDisplay, "div", "panel");
-      const wheel = makeElement(panel[i], "div", "wheel");
-      
-      cardSet.forEach((card) => {
-        const cardContainer = makeElement(wheel, "div", "card-container");
-        const cardDiv = makeElement(cardContainer, "div", "card");
-        const img = document.createElement("img");
-        img.src = `cards/${card}`;
-        img.alt = card;
-        cardDiv.append(img);
-      });
-    }
+  for (let i = 0; i < currentPanelCount; i++) {
+    panel[i] = makeElement(slotDisplay, "div", "panel");
+    const wheel = makeElement(panel[i], "div", "wheel");
 
-    applyStyles();
+    shuffledCards.forEach((card) => {
+      const cardContainer = makeElement(wheel, "div", "card-container");
+      const cardDiv = makeElement(cardContainer, "div", "card");
+      const img = document.createElement("img");
+      img.src = `cards/${card}`;
+      img.alt = card;
+      cardDiv.append(img);
+    });
   }
+
+  applyStyles();
+}
 
   init();
 
@@ -529,3 +530,12 @@ const fetchWinners = async () => {
 
 fetchWinners();
 setInterval(fetchWinners, 30000); 
+
+// Utility function to shuffle an array
+function shuffle(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
