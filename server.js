@@ -9,14 +9,13 @@ require('dotenv').config();
 const app = express();
 app.use(express.json()); 
 
-// Middleware
-app.use(
-  cors({
-    origin: 'https://naijagamer.netlify.app',
-    methods: ['GET', 'POST'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-  })
-);
+// Homepage endpoint to check if server is live
+app.get('/', (req, res) => {
+  res.status(200).json({
+    status: 'success',
+    message: 'Server is live and running!',
+  });
+});
 
 // 1. Database Connection Handling - Using MySQL Connection Pool
 const db = mysql.createPool({
@@ -47,6 +46,15 @@ const authenticate = (req, res, next) => {
     next();
   });
 };
+
+// Middleware
+app.use(
+  cors({
+    origin: 'https://naijagamer.netlify.app',
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  })
+);
 
 const generateToken = (userId) => {
   return jwt.sign(
@@ -276,6 +284,9 @@ app.get('/user-info', (req, res) => {
     );
   });
 });
+
+const PORT = process.env.PORT || 3000; // Set to 3000 if PORT is not defined in .env
+
 
 // Start server
 app.listen(PORT, () => {
