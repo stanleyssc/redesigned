@@ -99,7 +99,6 @@ app.post('/register', async (req, res) => {
   }
 });
 
-// Login endpoint
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
 
@@ -120,7 +119,8 @@ app.post('/login', (req, res) => {
       }
 
       const token = generateToken(user.user_id);
-      res.status(200).json({ token });
+      // Return both token and username
+      res.status(200).json({ token, username: user.username });
     });
   });
 });
