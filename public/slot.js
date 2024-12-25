@@ -27,9 +27,6 @@ let cardSet = [
   "star_8.png", "whot_20.png",
 ];
 
-
-
-
 document.addEventListener("DOMContentLoaded", function () { 
   updateBalanceDisplay(); 
   init(); 
@@ -299,7 +296,7 @@ function updateBalanceDisplay() {
 
 async function fetchCards(numPanels) {
     try {
-        const response = await fetch('http://127.0.0.1:5000/getCards', {
+        const response = await fetch('https://randomiser-ongf.onrender.com/getCards', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -334,27 +331,27 @@ async function initializeGame(numPanels) {
     }
 }
 
-// async function checkToken() {
-//   try {
-//       const jwt_decode = (await import('jwt-decode')).default;
-//       const token = getToken();
+async function checkToken() {
+  try {
+      const jwt_decode = (await import('jwt-decode')).default;
+      const token = getToken();
 
-//       if (!token) {
-//           showSessionExpiredAlert();
-//           return;
-//       }
+      if (!token) {
+          showSessionExpiredAlert();
+          return;
+      }
 
-//       const decoded = jwt_decode(token);
-//       const currentTime = Date.now() / 1000; 
-//       if (decoded.exp < currentTime) {
-//           showSessionExpiredAlert(); 
-//       } else {
-//           return;
-//       }
-//   } catch (error) {
-//       showSessionExpiredAlert();
-//   }
-// }
+      const decoded = jwt_decode(token);
+      const currentTime = Date.now() / 1000; 
+      if (decoded.exp < currentTime) {
+          showSessionExpiredAlert(); 
+      } else {
+          return;
+      }
+  } catch (error) {
+      showSessionExpiredAlert();
+  }
+}
 
 function showSessionExpiredAlert() {
   const alertContainer = document.createElement('div');
