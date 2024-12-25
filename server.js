@@ -1,56 +1,60 @@
 const express = require('express');
-const mysql = require('mysql2');
-const bcrypt = require('bcryptjs');
+const mysql = require('mysql');
 const jwt = require('jsonwebtoken');
-const bodyParser = require('body-parser');
 const cors = require('cors');
+const { body, validationResult } = require('express-validator');
+const bcrypt = require('bcrypt');
 require('dotenv').config();
 
-
 const app = express();
-const PORT = process.env.PORT || 3000;
+app.use(express.json()); 
 
-// Middleware
-app.use(bodyParser.json());
-app.use(
-  cors({
-    origin: 'http://127.0.0.1:5501',
-    methods: ['GET', 'POST'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-  })
-);
+// Homepage endpoint to check if server is live
+app.get('/', (req, res) => {
+  res.status(200).json({
+    status: 'success',
+    message: 'Server is live and running!',
+  });
+});
 
-// MySQL connection
-const db = mysql.createConnection({
+// 1. Database Connection Handling - Using MySQL Connection Pool
+const db = mysql.createPool({
+  connectionLimit: 50, // Set an appropriate connection limit
   host: process.env.DB_HOST,
-  user: process.env.DB_USER, 
+  user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
 });
 
-// Function to connect to the database with retries
-const connectToDatabase = async () => {
-  let retries = 5;  // Max retries
-  while (retries) {
-    try {
-      await db; 
-      console.log('Connected to the database');
-      break;  
-    } catch (err) {
-      console.error('Database connection failed:', err.message);
-      retries -= 1;
-      if (retries === 0) {
-        console.error('Max retries reached. Exiting process.');
-        process.exit(1); 
-      }
-      console.log(`Retrying... (${5 - retries} attempt(s) left)`);
-      await new Promise(res => setTimeout(res, 5000)); 
-    }
+// 2. Database Connection Retry Logic
+db.on('error', (err) => {
+  console.error('Database error:', err);
+});
+
+// 3. Token Security - Use environment variable for the JWT secret
+const authenticate = (req, res, next) => {
+  const token = req.headers['authorization'];
+  if (!token) {
+    return res.status(401).json({ error: 'No token provided' });
   }
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+    if (err) {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+    req.user_id = decoded.user_id; // Attach user ID to the request object
+    next();
+  });
 };
 
-// Connect to the database
-connectToDatabase();
+// Middleware
+app.use(
+  cors({
+    origin: 'https://naijagamer.netlify.app',
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  })
+);
 
 const generateToken = (userId) => {
   return jwt.sign(
@@ -122,7 +126,7 @@ app.post('/login', (req, res) => {
 });
 
 // Get and update user balance
-app.route('https://slot-backend-f32n.onrender.com/balance')
+app.route('/balance')
   .get((req, res) => {
     const token = req.headers['authorization'];
 
@@ -173,7 +177,7 @@ app.route('https://slot-backend-f32n.onrender.com/balance')
   });
 
 // Store game outcome
-app.post('https://slot-backend-f32n.onrender.com/outcome', (req, res) => {
+app.post('/outcome', (req, res) => {
   const token = req.headers['authorization'];
   const { betAmount, numberOfPanels, outcome, payout, jackpot_type } = req.body;
 
@@ -191,8 +195,9 @@ app.post('https://slot-backend-f32n.onrender.com/outcome', (req, res) => {
       if (err || result.length === 0) {
         return res.status(500).json({ error: 'Error fetching balance' });
       }
-      const balanceAfter = currentBalance + payout - betAmount;
       const currentBalance = result[0].balance;
+      const balanceAfter = currentBalance + payout - betAmount;
+
       if (betAmount > currentBalance) {
         return res.status(400).json({ error: 'Insufficient balance' });
       };
@@ -226,7 +231,7 @@ db.query(query, values, (err) => {
   });
 });
 
-app.get('https://slot-backend-f32n.onrender.com/winners', (req, res) => {
+app.get('/winners', (req, res) => {
   const query = `
     SELECT users.username, game_outcomes.jackpot_type, game_outcomes.payout, game_outcomes.created_at
     FROM game_outcomes
@@ -251,7 +256,7 @@ app.get('https://slot-backend-f32n.onrender.com/winners', (req, res) => {
 
 
 // Add user-info endpoint
-app.get('https://slot-backend-f32n.onrender.com/user-info', (req, res) => {
+app.get('/user-info', (req, res) => {
   const token = req.headers['authorization'];
 
   if (!token) {
