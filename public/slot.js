@@ -29,6 +29,7 @@ let cardSet = [
 
 document.addEventListener("DOMContentLoaded", function () { 
   updateUserDetails();
+  displayUserInfo();
   updateBalanceDisplay(); 
   init(); 
 
