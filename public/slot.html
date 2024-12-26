@@ -10,14 +10,35 @@
   <!-- Top Navigation -->
   <header class="top-nav">
     <div class="user-info">
-      <span class="welcome-message">Welcome, User</span>
-      <button class="logout-button">Logout</button>
+      <span class="welcome-message" id="welcome-message">Welcome, User</span>
+      <button class="landing-page" id="landing-page">Back to Home</button>
+      <button class="deposit" id="deposit">Deposit</button>
+      <div class="dropdown">
+        <button class="accountSettings" id="accountSettings">Account Settings</button>
+        <div class="dropdown-menu">
+          <a href="#profile">Profile</a>
+          <a href="#betHistory">Bet History</a>
+          <a href="#help">Help</a>
+        </div>
+      </div>
+      <button class="logout-button" id="logout-button">Logout</button>
     </div>
   </header>
   
+
+  <script>
+    document.getElementById('landing-page').addEventListener('click', () => {
+        window.location.href = 'landing-page.html'; // Redirect to the home page
+    });
+
+    document.getElementById('logout-button').addEventListener('click', () => {
+        window.location.href = 'index.html'; // Redirect to the login page
+    });
+</script>
+  
   <!-- Header Section -->
   <div class="header">
-    <h1>WELCOME</h1>
+    <h1>WELCOME TO NGH</h1>
   </div>
 
   <div class="winners-banner">Get ready to win millions!!!</div>
@@ -30,9 +51,7 @@
     </div>
     <button class="panelSelector" id="three-panels">3 PANELS</button>
     <button class="panelSelector" id="four-panels">4 PANELS</button>
-    <div class="account-balance">
-      Balance
-    </div>
+    <div class="account-balance" id="userBalance">Balance</div>
     <div class="slot-outer-box">
       <div class="slot-mid-box">
         <div class="slot-inner-box">
