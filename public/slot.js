@@ -560,4 +560,43 @@ function shuffle(array) {
     [array[i], array[j]] = [array[j], array[i]];
   }
   return array;
-}
+};
+
+// Fetch and display user info
+const displayUserInfo = () => {
+  const token = localStorage.getItem('token');
+
+  if (!token) {
+      console.log('No token found');
+      return;
+  }
+
+  fetch('https://slot-backend-f32n.onrender.com/user-info', {
+      method: 'GET',
+      headers: {
+          Authorization: token,
+          'Content-Type': 'application/json',
+      },
+  })
+  .then((response) => {
+      if (!response.ok) {
+          throw new Error('Failed to fetch user info');
+      }
+      return response.json();
+  })
+  .then((data) => {
+      const welcomeMessage = document.getElementById('welcome-message');
+      const userBalanceDisplay = document.getElementById('userBalance');
+      welcomeMessage.innerHTML = `Welcome, ${capitalizeFirstLetter(data.username)}`;
+      userBalanceDisplay.innerHTML = `Balance: ₦${data.balance}`;
+      userBalance = data.balance;
+  })
+  .catch((error) => {
+      console.error('Error fetching user info:', error);
+  });
+};
+
+// Capitalize the first letter of the username
+const capitalizeFirstLetter = (username) => {
+return username.charAt(0).toUpperCase() + username.slice(1);
+};
