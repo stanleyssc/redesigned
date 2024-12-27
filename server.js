@@ -13,7 +13,7 @@ app.use(express.json());
 app.get('/', (req, res) => {
   res.status(200).json({
     status: 'success',
-    message: 'Server is live and running!!',
+    message: 'Server is live and running!',
   });
 });
 
@@ -100,6 +100,7 @@ app.post('/register', async (req, res) => {
   }
 });
 
+//Login endpoint
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
 
@@ -119,11 +120,23 @@ app.post('/login', (req, res) => {
         return res.status(400).json({ error: 'Invalid username or password' });
       }
 
+      // Update the last_seen field
+      db.query(
+        'UPDATE users SET last_seen = ? WHERE user_id = ?',
+        [new Date(), user.user_id],
+        (updateErr) => {
+          if (updateErr) {
+            console.error('Error updating last seen:', updateErr);
+          }
+        }
+      );
+
       const token = generateToken(user.user_id);
       res.status(200).json({ token, username: user.username });
     });
   });
 });
+
 
 // Get and update user balance
 app.route('/balance')
