@@ -13,7 +13,7 @@ app.use(express.json());
 app.get('/', (req, res) => {
   res.status(200).json({
     status: 'success',
-    message: 'Server is live and running!!!',
+    message: 'Server is live and running!',
   });
 });
 
@@ -163,7 +163,7 @@ app.post('/outcome', authenticate, (req, res) => {
     return res.status(400).json({ error: 'All game outcome fields are required' });
   }
     const query = `
-      INSERT INTO game_outcomes (user_id, bet_amount, panels, outcome, payout, balanceAfter, jackpot_type, created_at)
+      INSERT INTO game_outcomes (user_id, bet_amount, panels, outcome, payout, userBalance, jackpot_type, created_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `;
     const values = [req.user_id, betAmount, numberOfPanels, JSON.stringify(outcome), payout, userBalance, jackpot_type, new Date()];
@@ -174,7 +174,6 @@ app.post('/outcome', authenticate, (req, res) => {
       }
         res.status(200).json({
           message: 'Game outcome processed successfully',
-          balanceAfter: userBalance,
         });
       });
     });
