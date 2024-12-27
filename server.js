@@ -179,7 +179,6 @@ app.post('/outcome', authenticate, (req, res) => {
       });
     });
   });
-});
 
 // Fetch recent winners
 app.get('/winners', (req, res) => {
