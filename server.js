@@ -157,9 +157,9 @@ app.route('/balance')
 
 // Store game outcome
 app.post('/outcome', authenticate, (req, res) => {
-  const { betAmount, numberOfPanels, outcome, payout, jackpot_type } = req.body;
+  const { betAmount, numberOfPanels, outcome, payout, jackpot_type, userBalance } = req.body;
 
-  if (!betAmount || !numberOfPanels || !outcome || payout === undefined) {
+  if (!betAmount || !numberOfPanels || !outcome || payout === undefined || userBalance === undefined) {
     return res.status(400).json({ error: 'All game outcome fields are required' });
   }
 
@@ -175,7 +175,7 @@ app.post('/outcome', authenticate, (req, res) => {
     }
 
     const query = `
-      INSERT INTO game_outcomes (user_id, bet_amount, panels, outcome, payout, balance_after, jackpot_type, created_at)
+      INSERT INTO game_outcomes (user_id, bet_amount, panels, outcome, payout, userBalance, jackpot_type, created_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `;
     const values = [req.user_id, betAmount, numberOfPanels, JSON.stringify(outcome), payout, balanceAfter, jackpot_type, new Date()];
@@ -185,7 +185,7 @@ app.post('/outcome', authenticate, (req, res) => {
         return res.status(500).json({ error: 'Error logging game outcome' });
       }
 
-      db.query('UPDATE users SET balance = ? WHERE user_id = ?', [balanceAfter, req.user_id], (err) => {
+      db.query('UPDATE users SET balance = ? WHERE user_id = ?', [userBalance, req.user_id], (err) => {
         if (err) {
           console.error('Error updating user balance:', err);
           return res.status(500).json({ error: 'Error updating user balance' });
@@ -193,7 +193,7 @@ app.post('/outcome', authenticate, (req, res) => {
 
         res.status(200).json({
           message: 'Game outcome processed successfully',
-          balanceAfter,
+          balanceAfter: userBalance,
         });
       });
     });
