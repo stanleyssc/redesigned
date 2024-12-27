@@ -13,7 +13,7 @@ app.use(express.json());
 app.get('/', (req, res) => {
   res.status(200).json({
     status: 'success',
-    message: 'Server is live and running!',
+    message: 'Server is live and running!!',
   });
 });
 
@@ -184,6 +184,7 @@ app.get('/winners', (req, res) => {
     SELECT users.username, game_outcomes.jackpot_type, game_outcomes.payout, game_outcomes.created_at
     FROM game_outcomes
     JOIN users ON game_outcomes.user_id = users.user_id
+    WHERE game_outcomes.jackpot_type IS NOT NULL AND game_outcomes.jackpot_type != 'none'
     ORDER BY game_outcomes.created_at DESC
     LIMIT 50
   `;
