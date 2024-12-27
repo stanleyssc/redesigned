@@ -13,7 +13,7 @@ app.use(express.json());
 app.get('/', (req, res) => {
   res.status(200).json({
     status: 'success',
-    message: 'Server is live and running!!',
+    message: 'Server is live and running!!!',
   });
 });
 
@@ -162,35 +162,16 @@ app.post('/outcome', authenticate, (req, res) => {
   if (!betAmount || !numberOfPanels || !outcome || payout === undefined || userBalance === undefined) {
     return res.status(400).json({ error: 'All game outcome fields are required' });
   }
-
-  db.query('SELECT balance FROM users WHERE user_id = ?', [req.user_id], (err, result) => {
-    if (err || result.length === 0) {
-      return res.status(500).json({ error: 'Error fetching balance' });
-    }
-    const currentBalance = result[0].balance;
-    const balanceAfter = currentBalance + payout - betAmount;
-
-    if (betAmount > currentBalance) {
-      return res.status(400).json({ error: 'Insufficient balance' });
-    }
-
     const query = `
-      INSERT INTO game_outcomes (user_id, bet_amount, panels, outcome, payout, userBalance, jackpot_type, created_at)
+      INSERT INTO game_outcomes (user_id, bet_amount, panels, outcome, payout, balanceAfter, jackpot_type, created_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `;
-    const values = [req.user_id, betAmount, numberOfPanels, JSON.stringify(outcome), payout, balanceAfter, jackpot_type, new Date()];
+    const values = [req.user_id, betAmount, numberOfPanels, JSON.stringify(outcome), payout, userBalance, jackpot_type, new Date()];
 
     db.query(query, values, (err) => {
       if (err) {
         return res.status(500).json({ error: 'Error logging game outcome' });
       }
-
-      db.query('UPDATE users SET balance = ? WHERE user_id = ?', [userBalance, req.user_id], (err) => {
-        if (err) {
-          console.error('Error updating user balance:', err);
-          return res.status(500).json({ error: 'Error updating user balance' });
-        }
-
         res.status(200).json({
           message: 'Game outcome processed successfully',
           balanceAfter: userBalance,
