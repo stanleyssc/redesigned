@@ -13,7 +13,7 @@ app.use(express.json());
 app.get('/', (req, res) => {
   res.status(200).json({
     status: 'success',
-    message: 'Server is live and running!c',
+    message: 'Server is live and running!d',
   });
 });
 
@@ -286,50 +286,52 @@ app.post('/transaction', (req, res) => {
   });
 });
 
-// Update user profile
 app.put('/update-profile', authenticate, (req, res) => {
   const { username, email, phone_number, bank_name, bank_account_number, account_name } = req.body;
 
-  // Validate the inputs
-  if (!email && !phone_number && !bank_name && !bank_account_number && !account_name) {
+  // Initialize a flag to check if any valid fields are provided
+  let hasValidField = false;
+
+  // Validate each field and prepare for update if provided
+  const updateFields = [];
+  const values = [];
+
+  if (email && email.trim() !== "") {
+    updateFields.push('email = ?');
+    values.push(email);
+    hasValidField = true;
+  }
+  if (phone_number && phone_number.trim() !== "") {
+    updateFields.push('phone_number = ?');
+    values.push(phone_number);
+    hasValidField = true;
+  }
+  if (bank_name && bank_name.trim() !== "") {
+    updateFields.push('bank_name = ?');
+    values.push(bank_name);
+    hasValidField = true;
+  }
+  if (bank_account_number && /^\d{10}$/.test(bank_account_number)) {
+    updateFields.push('bank_account_number = ?');
+    values.push(bank_account_number);
+    hasValidField = true;
+  }
+  if (account_name && account_name.trim() !== "") {
+    updateFields.push('account_name = ?');
+    values.push(account_name);
+    hasValidField = true;
+  }
+
+  // Check if at least one valid field is provided
+  if (!hasValidField) {
     return res.status(400).json({ error: 'At least one field must be provided' });
   }
 
-  // Validate the bank account number (must be a 10-digit number)
-  if (bank_account_number && !/^\d{10}$/.test(bank_account_number)) {
-    return res.status(400).json({ error: 'Bank account number must be a 10-digit number' });
-  }
-
-  // Update the profile
-  let updateQuery = 'UPDATE users SET ';
-  let values = [];
-
-  if (email) {
-    updateQuery += 'email = ?, ';
-    values.push(email);
-  }
-  if (phone_number) {
-    updateQuery += 'phone_number = ?, ';
-    values.push(phone_number);
-  }
-  if (bank_name) {
-    updateQuery += 'bank_name = ?, ';
-    values.push(bank_name);
-  }
-  if (bank_account_number) {
-    updateQuery += 'bank_account_number = ?, ';
-    values.push(bank_account_number);
-  }
-  if (account_name) {
-    updateQuery += 'account_name = ?, ';
-    values.push(account_name);
-  }
-
-  // Remove the trailing comma
-  updateQuery = updateQuery.slice(0, -2);
-  updateQuery += ' WHERE user_id = ?';
+  // Create the update query string
+  let updateQuery = `UPDATE users SET ${updateFields.join(', ')} WHERE user_id = ?`;
   values.push(req.user_id);
 
+  // Perform the database update
   db.query(updateQuery, values, (err, result) => {
     if (err) {
       console.error('Error updating profile:', err);
