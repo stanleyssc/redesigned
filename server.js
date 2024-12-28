@@ -13,7 +13,7 @@ app.use(express.json());
 app.get('/', (req, res) => {
   res.status(200).json({
     status: 'success',
-    message: 'Server is live and running!q',
+    message: 'Server is live and running!b',
   });
 });
 
@@ -283,6 +283,47 @@ app.post('/transaction', (req, res) => {
         });
       });
     });
+  });
+});
+
+// Update user profile
+app.put('/update-profile', authenticate, (req, res) => {
+  const { username, email, phone_number } = req.body;
+
+  // Validate the inputs
+  if (!email && !phone_number) {
+    return res.status(400).json({ error: 'Either email or phone number must be provided' });
+  }
+
+  // Update the profile
+  let updateQuery = 'UPDATE users SET ';
+  let values = [];
+
+  if (email) {
+    updateQuery += 'email = ?, ';
+    values.push(email);
+  }
+  if (phone_number) {
+    updateQuery += 'phone_number = ?, ';
+    values.push(phone_number);
+  }
+
+  // Remove the trailing comma
+  updateQuery = updateQuery.slice(0, -2);
+  updateQuery += ' WHERE user_id = ?';
+  values.push(req.user_id);
+
+  db.query(updateQuery, values, (err, result) => {
+    if (err) {
+      console.error('Error updating profile:', err);
+      return res.status(500).json({ error: 'Error updating profile' });
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.status(200).json({ message: 'Profile updated successfully' });
   });
 });
 
