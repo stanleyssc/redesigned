@@ -13,7 +13,7 @@ app.use(express.json());
 app.get('/', (req, res) => {
   res.status(200).json({
     status: 'success',
-    message: 'Server is live and running!d',
+    message: 'Server is live and running!e',
   });
 });
 
@@ -216,16 +216,29 @@ app.get('/winners', (req, res) => {
   });
 });
 
-// Fetch user info
+// Fetch user profile data
 app.get('/user-info', authenticate, (req, res) => {
-  db.query('SELECT username, balance FROM users WHERE user_id = ?', [req.user_id], (err, result) => {
-    if (err || result.length === 0) {
-      console.error('Error fetching user info or user not found:', err);
-      return res.status(500).json({ error: 'Error fetching user info' });
+  const userId = req.user_id; // Assuming user_id is set after authentication
+
+  db.query('SELECT * FROM users WHERE user_id = ?', [userId], (err, result) => {
+    if (err) {
+      return res.status(500).json({ error: 'Error fetching user profile' });
     }
+
+    if (result.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Send the full user data, including user_id, username, email, phone_number, bank_name, etc.
+    const user = result[0];
     res.status(200).json({
-      username: result[0].username,
-      balance: result[0].balance,
+      user_id: user.user_id,
+      username: user.username,
+      email: user.email,
+      phone_number: user.phone_number,
+      bank_name: user.bank_name,
+      bank_account_number: user.bank_account_number,
+      account_name: user.account_name
     });
   });
 });
