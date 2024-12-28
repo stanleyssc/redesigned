@@ -13,7 +13,7 @@ app.use(express.json());
 app.get('/', (req, res) => {
   res.status(200).json({
     status: 'success',
-    message: 'Server is live and running!e',
+    message: 'Server is live and running!f',
   });
 });
 
@@ -238,7 +238,8 @@ app.get('/user-info', authenticate, (req, res) => {
       phone_number: user.phone_number,
       bank_name: user.bank_name,
       bank_account_number: user.bank_account_number,
-      account_name: user.account_name
+      account_name: user.account_name,
+      balance: user.balance
     });
   });
 });
