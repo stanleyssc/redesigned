@@ -7,24 +7,59 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- Top Navigation -->
-  <header class="top-nav">
-    <div class="user-info">
-      <span class="welcome-message" id="welcome-message">Welcome, User</span>
-      <button class="landing-page" id="landing-page">Back to Home</button>
-      <button class="deposit" id="deposit">Deposit</button>
-      <div class="dropdown">
-        <button class="accountSettings" id="accountSettings">Account Settings</button>
-        <div class="dropdown-menu">
-          <a href="#profile">Profile</a>
-          <a href="#betHistory">Bet History</a>
-          <a href="#help">Help</a>
-        </div>
+<!-- Top Navigation -->
+<header class="top-nav">
+  <div class="user-info">
+    <span class="welcome-message" id="welcome-message">Welcome, User</span>
+    <button class="landing-page" id="landing-page">Back to Home</button>
+    <button class="deposit" id="deposit">Deposit</button>
+    <div class="dropdown">
+      <button class="accountSettings" id="accountSettings">Account Settings</button>
+      <div class="dropdown-menu" id="dropdownMenu"> <!-- Corrected ID -->
+        <a href="javascript:void(0);" id="viewProfile">Profile</a>
+        <a href="#betHistory">Bet History</a>
+        <a href="#help">Help</a>
       </div>
-      <button class="logout-button" id="logout-button">Logout</button>
     </div>
-  </header>
+    <button class="logout-button" id="logout-button">Logout</button>
+  </div>
+</header>
+
+<!-- Profile Update Modal -->
+<div class="modal" id="updateProfileModal">
+  <div class="modal-content">
+    <span class="close" id="closeProfileModal">&times;</span>
+    <h2>Update Profile</h2>
+    <form id="updateProfileForm">
+      <!-- User ID (uneditable) -->
+      <label for="user_id">User ID:</label>
+      <input type="text" id="user_id" name="user_id" readonly />
   
+      <!-- Editable fields -->
+      <label for="username">Username:</label>
+      <input type="text" id="username" name="username" placeholder="Enter your username here" />
+  
+      <label for="email">Email:</label>
+      <input type="email" id="email" name="email" placeholder="Enter your email here" />
+  
+      <label for="phone_number">Phone Number:</label>
+      <input type="text" id="phone_number" name="phone_number" placeholder="Enter your phone number here" />
+  
+      <label for="bank_name">Bank Name:</label>
+      <input type="text" id="bank_name" name="bank_name" placeholder="Enter your bank name here" />
+  
+      <label for="bank_account_number">Bank Account Number:</label>
+      <input type="text" id="bank_account_number" name="bank_account_number" placeholder="Enter your bank account number here" />
+  
+      <label for="account_name">Account Name:</label>
+      <input type="text" id="account_name" name="account_name" placeholder="Enter your account name here" />
+  
+      <button type="submit">Update Profile</button>
+    </form>
+  </div>
+  
+</div>
+
 
   <script>
     document.getElementById('landing-page').addEventListener('click', () => {
@@ -37,21 +72,29 @@
 </script>
   
   <!-- Header Section -->
-  <div class="header">
+  <div class="logo" id="logo">
     <h1>WELCOME TO NGH</h1>
   </div>
 
-  <div class="winners-banner">Get ready to win millions!!!</div>
-  <div class="main-container">
+  <div class="winners-banner" id="winners-banner">Get ready to win millions!!!</div>
+
+<!-- Main Container -->
+<div class="main-container">
+  <!-- Top Panel: Account Balance + Bet Selection -->
+  <div class="top-panel">
+    <!-- Bet Selection -->
     <div class="bet-selection">
       <button class="bet-button">₦10</button>
       <button class="bet-button">₦50</button>
       <button class="bet-button">₦100</button>
       <button class="bet-button">₦500</button>
     </div>
-    <button class="panelSelector" id="three-panels">3 PANELS</button>
-    <button class="panelSelector" id="four-panels">4 PANELS</button>
-    <div class="account-balance" id="userBalance">Balance</div>
+      <!-- Account Balance -->
+      <div class="account-balance" id="userBalance">
+        <img src="wallet.webp" alt="Wallet" style="height: 20px; margin-right: 5px;">
+      </div>
+  </div>
+    <!-- Slot Box -->
     <div class="slot-outer-box">
       <div class="slot-mid-box">
         <div class="slot-inner-box">
@@ -67,18 +110,7 @@
   <div class="messageBox">
     Please select your bet.
   </div>
-
-  <!-- General Info -->
-  <div class="general-info">
-    General info
-  </div>
-
-  <!-- Footer -->
-  <footer>
-    <a href="#">Link 1</a>
-    <a href="#">Link 2</a>
-    <a href="#">Link 3</a>
-  </footer>
+  
 <script src="slot.js"></script>
 </body>
 </html>
