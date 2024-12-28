@@ -13,7 +13,7 @@ app.use(express.json());
 app.get('/', (req, res) => {
   res.status(200).json({
     status: 'success',
-    message: 'Server is live and running!b',
+    message: 'Server is live and running!c',
   });
 });
 
@@ -288,11 +288,16 @@ app.post('/transaction', (req, res) => {
 
 // Update user profile
 app.put('/update-profile', authenticate, (req, res) => {
-  const { username, email, phone_number } = req.body;
+  const { username, email, phone_number, bank_name, bank_account_number, account_name } = req.body;
 
   // Validate the inputs
-  if (!email && !phone_number) {
-    return res.status(400).json({ error: 'Either email or phone number must be provided' });
+  if (!email && !phone_number && !bank_name && !bank_account_number && !account_name) {
+    return res.status(400).json({ error: 'At least one field must be provided' });
+  }
+
+  // Validate the bank account number (must be a 10-digit number)
+  if (bank_account_number && !/^\d{10}$/.test(bank_account_number)) {
+    return res.status(400).json({ error: 'Bank account number must be a 10-digit number' });
   }
 
   // Update the profile
@@ -306,6 +311,18 @@ app.put('/update-profile', authenticate, (req, res) => {
   if (phone_number) {
     updateQuery += 'phone_number = ?, ';
     values.push(phone_number);
+  }
+  if (bank_name) {
+    updateQuery += 'bank_name = ?, ';
+    values.push(bank_name);
+  }
+  if (bank_account_number) {
+    updateQuery += 'bank_account_number = ?, ';
+    values.push(bank_account_number);
+  }
+  if (account_name) {
+    updateQuery += 'account_name = ?, ';
+    values.push(account_name);
   }
 
   // Remove the trailing comma
