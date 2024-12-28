@@ -13,7 +13,7 @@ app.use(express.json());
 app.get('/', (req, res) => {
   res.status(200).json({
     status: 'success',
-    message: 'Server is live and running!',
+    message: 'Server is live and running!q',
   });
 });
 
@@ -226,6 +226,62 @@ app.get('/user-info', authenticate, (req, res) => {
     res.status(200).json({
       username: result[0].username,
       balance: result[0].balance,
+    });
+  });
+});
+
+// Admin-only endpoint for deposits and withdrawals
+app.post('/transaction', (req, res) => {
+  const { adminSecret, userId, type, amount } = req.body;
+
+  // Ensure the request is authorized
+  if (adminSecret !== process.env.ADMIN_SECRET) {
+    return res.status(403).json({ error: 'Unauthorized access' });
+  }
+
+  if (!userId || !type || !amount || isNaN(amount) || (type !== 'deposit' && type !== 'withdrawal')) {
+    return res.status(400).json({ error: 'Invalid request data' });
+  }
+
+  // Fetch the user's current balance
+  db.query('SELECT balance FROM users WHERE user_id = ?', [userId], (err, result) => {
+    if (err || result.length === 0) {
+      console.error('Error fetching user balance:', err);
+      return res.status(500).json({ error: 'Error fetching user data' });
+    }
+
+    const currentBalance = parseFloat(result[0].balance);
+    const newBalance = type === 'deposit'
+      ? currentBalance + parseFloat(amount)
+      : currentBalance - parseFloat(amount);
+
+    if (newBalance < 0) {
+      return res.status(400).json({ error: 'Insufficient balance for withdrawal' });
+    }
+
+    // Update the user's balance
+    db.query('UPDATE users SET balance = ? WHERE user_id = ?', [newBalance, userId], (updateErr) => {
+      if (updateErr) {
+        console.error('Error updating balance:', updateErr);
+        return res.status(500).json({ error: 'Error updating balance' });
+      }
+
+      // Log the transaction
+      const query = `
+        INSERT INTO transactions (user_id, type, amount, balance_after)
+        VALUES (?, ?, ?, ?)
+      `;
+      db.query(query, [userId, type, amount, newBalance], (logErr) => {
+        if (logErr) {
+          console.error('Error logging transaction:', logErr);
+          return res.status(500).json({ error: 'Error logging transaction' });
+        }
+
+        res.status(200).json({
+          message: `Transaction successful: ${type} of N${amount}`,
+          newBalance,
+        });
+      });
     });
   });
 });
