@@ -102,8 +102,8 @@ body {
   height: 59px;
   max-width: 59px;
   max-height: 59px;
-  min-width: 59px;
-  min-height: 59px;
+  min-width: 39px;
+  min-height: 39px;
   margin: auto;
   border-radius: 50%;
   background: #df73eb;
@@ -361,7 +361,7 @@ body {
 .winners-banner .winner-marquee {
   display: inline-block;
   white-space: nowrap;
-  animation: marquee 50s linear infinite; /* Smooth scrolling text */
+  animation: marquee 80s linear infinite; /* Smooth scrolling text */
   background: -webkit-linear-gradient(90deg, #ffffff, #ffd700, #ffffff);
   -webkit-background-clip: text;
   
