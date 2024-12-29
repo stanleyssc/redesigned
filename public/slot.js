@@ -1,19 +1,22 @@
 let currentPanelCount = 4;
 let gameInPlay = false;
-let holder = [];
-let spinSpeed = 10;  // Initial speed
+let spinSpeed = 10;
 let userBalance = "";
 let selectedBet = null;
 const spinButton = document.querySelector(".spin-button");
 const betButtons = document.querySelectorAll(".bet-button");
-const panelSelectors = document.querySelectorAll(".panel-selector");
 let panel = [];
 const cardHeight = 130;
 let game = { ani: null };
-let serverResponse = [];
 let isSpinning = false;
 let userWelcome = document.getElementById(".welcome-message");
 let jackpotTriggered = null;
+const bountyJackpotCards = [
+  "circle_12.png",
+  "circle_4.png",
+  "cross_5.png",
+  "cross_13.png",
+];
 
 let cardSet = ["circle_1.png", "circle_2.png", "circle_3.png", "circle_4.png", "circle_5.png", "circle_7.png", "circle_8.png", "circle_10.png", "circle_11.png", "circle_12.png", "circle_13.png", "circle_14.png", "triangle_1.png", "triangle_2.png", "triangle_3.png", "triangle_4.png", "triangle_5.png", "triangle_7.png", "triangle_8.png", "triangle_10.png", "triangle_11.png","triangle_12.png", "triangle_13.png", "triangle_14.png","cross_1.png","cross_2.png", "cross_3.png", "cross_5.png", "cross_7.png", "cross_10.png", "cross_11.png", "cross_13.png", "cross_14.png", "square_1.png", "square_2.png", "square_3.png", "square_5.png", "square_7.png", "square_10.png", "square_11.png", "square_13.png", "square_14.png", "star_1.png", "star_2.png", "star_3.png", "star_4.png", "star_5.png", "star_7.png", "star_8.png", "whot_20.png",
 ];
@@ -21,6 +24,7 @@ let cardSet = ["circle_1.png", "circle_2.png", "circle_3.png", "circle_4.png", "
 document.addEventListener("DOMContentLoaded", function () {
   displayUserInfo();
   init();
+  updateBountyJackpotCards(bountyJackpotCards);
 
   betButtons.forEach((button) => {
     button.addEventListener("click", () => {
@@ -35,7 +39,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (isSpinning) {
       return;
     }
-
+    displayUserInfo();
     if (!selectedBet || userBalance < selectedBet) {
       const message =
         userBalance < selectedBet
@@ -48,15 +52,14 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!gameInPlay) {
       isSpinning = true;
       try {
-        // await initializeGame(currentPanelCount);
-        startSpin();
-        updateBalanceOnDisplay(userBalance);
-        await updateBalanceOnServer(userBalance);
-      } catch (error) {
-        console.error("An error occurred during the spin:", error);
-      } finally {
-        isSpinning = false;
         userBalance -= selectedBet;
+        await updateBalanceOnServer(userBalance);
+        startSpin();
+        displayUserInfo();
+      } catch (error) {
+        Sentry.captureException(new Error("An error occurred during the spin: " + error));
+      } finally {
+        isSpinning = false;       
       }
     }
   });
@@ -82,38 +85,22 @@ function init() {
       cardDiv.append(img);
     });
   }
-  // applyStyles();
 }
 
 function startSpin() {
-  if (!selectedBet || userBalance < selectedBet) {
-    const message =
-      userBalance < selectedBet
-        ? "Insufficient balance."
-        : "Please select a bet amount.";
-    updateMessage(message, true);
-    return;
-  }
-
-  // Deduct bet and update balance
-  userBalance -= selectedBet;
-  updateBalanceOnDisplay(userBalance);
   updateMessage(`Spinning... Bet: ₦${selectedBet}.`);
   disableButtons();
 
   gameInPlay = true;
   isSpinning = true;
-  spinSpeed = 30; // Reset spin speed
+  spinSpeed = 30;
 
-  // Assign random spin count for each wheel
   for (let i = 0; i < currentPanelCount; i++) {
     const wheel = panel[i].querySelector(".wheel");
-    panel[i].mover = Math.floor(Math.random() * 800 + 10);
+    panel[i].mover = Math.floor(Math.random() * 800 + 100);
   }
-
   game.ani = requestAnimationFrame(spin);
 }
-
 
 function spin() {
   let spinner = 1000;
@@ -133,7 +120,7 @@ function spin() {
 
     if (el.mover > 0) {
       el.mover--;
-      offsetY += spinSpeed; // Speed up the spin effect
+      offsetY += spinSpeed;
 
       if (offsetY > -cardHeight) {
         offsetY -= cardHeight;
@@ -192,9 +179,6 @@ function stopGameplay() {
   );
 }
 
-// Utility function to check if all elements in an array match a condition
-const allMatch = (array, condition) => array.every(condition);
-
 // Function to handle win message and update payout
 const handleWin = (winType, payout) => {
   updateMessage(`You won ₦${payout}! ${winType} win!`);
@@ -202,123 +186,106 @@ const handleWin = (winType, payout) => {
   jackpotTriggered = winType;
 };
 
-// Define the payout multipliers in an object
+// Payout multipliers 
 const payoutMultipliers = {
   ultimate: 1000,
   platinum: 500,
   gold: 300,
   silver: 50,
   bounty: 5000,
+  bonusShape: 10,
+  bonusNumber: 5,
 };
 
-// Function to calculate payout
+const allMatch = (array, condition) => array.every(condition);
+
+function handleWinActions(payout, jackpotType, winMessage) {
+  updateMessage(winMessage);
+  celebrateWin();
+  playSound();
+  userBalance += payout;
+  displayUserInfo();
+  updateBalanceOnServer(userBalance);
+}
+
 function calculatePayout() {
   const panelCards = holder;
   let payout = 0;
+  let jackpotType = null;
+  let winMessage = "";
 
-  if (panelCards.every((card) => card === "whot_20.png")) {
+  if (panelCards.includes(bountyJackpotCards[0]) &&
+      panelCards.includes(bountyJackpotCards[1]) &&
+      panelCards.includes(bountyJackpotCards[2]) &&
+      panelCards.includes(bountyJackpotCards[3])) {
+    payout = payoutMultipliers.bounty * selectedBet;
+    jackpotType = "Bounty";
+    winMessage = `${jackpotType}!! You win ₦${payout}!!!`;
+    handleWinActions(payout, jackpotType, winMessage);
+  }  
+  else if (panelCards.every(card => card === "whot_20.png")) {
     payout = payoutMultipliers.ultimate * selectedBet;
-    updateMessage(`You won ₦${payout}! Ultimate win!`);
-    playSound();
-    jackpotTriggered = "Ultimate";
-  } else if (panelCards.every((card) => card === panelCards[0])) {
+    jackpotType = "Ultimate";
+    winMessage = `${jackpotType}!! You win ₦${payout}!!!`;
+    handleWinActions(payout, jackpotType, winMessage);
+  } 
+  else if (panelCards.every(card => card === panelCards[0])) {
     payout = payoutMultipliers.platinum * selectedBet;
-    updateMessage(`You won ₦${payout}! Platinum win!`);
-    playSound();
-    jackpotTriggered = "Platinum";
-  } else if (
-    panelCards.every(
-      (card) => card.split("_")[1] === panelCards[0].split("_")[1]
-    )
-  ) {
+    jackpotType = "Platinum";
+    winMessage = `${jackpotType} JACKPOT!! You win ₦${payout}!!!`;
+    handleWinActions(payout, jackpotType, winMessage);
+  } 
+  else if (allMatch(panelCards, card => card.split("_")[1] === panelCards[0].split("_")[1])) {
     payout = payoutMultipliers.gold * selectedBet;
-    updateMessage(`You won ₦${payout}! Gold win!`);
-    playSound();
-    jackpotTriggered = "Gold";
-  } else if (
-    panelCards.every(
-      (card) => card.split("_")[0] === panelCards[0].split("_")[0]
-    )
-  ) {
+    jackpotType = "Gold";
+    winMessage = `${jackpotType} JACKPOT!! You win ₦${payout}!!!`;
+    handleWinActions(payout, jackpotType, winMessage);
+  } 
+  else if (allMatch(panelCards, card => card.split("_")[0] === panelCards[0].split("_")[0])) {
     payout = payoutMultipliers.silver * selectedBet;
-    updateMessage(`You won ₦${payout}! Silver win!`);
-    playSound();
-    jackpotTriggered = "Silver";
-  } else {
-    const jackpotCards = [
-      "circle_1.png",
-      "circle_4.png",
-      "cross_5.png",
-      "cross_13.png",
-    ];
-    const isJackpot =
-      panelCards.includes(jackpotCards[0]) &&
-      panelCards.includes(jackpotCards[1]) &&
-      panelCards.includes(jackpotCards[2]) &&
-      panelCards.includes(jackpotCards[3]);
-
-    if (isJackpot) {
-      payout = payoutMultipliers.bounty * selectedBet;
-      updateMessage(`You won ₦${payout}! Weekly Jackpot!`);
-      celebrateWin();
-      playSound();
-      jackpotTriggered = "Bounty Jackpot";
-    }
+    jackpotType = "Silver";
+    winMessage = `${jackpotType} JACKPOT!! You win ₦${payout}!!!`;
+    handleWinActions(payout, jackpotType, winMessage);
+  } 
+  else if (panelCards.filter(card => card.split("_")[1] === panelCards[0].split("_")[1]).length >= 3) {
+    payout = payoutMultipliers.bonusShape * selectedBet;
+    jackpotType = "Bonus Shape";
+    const sameNumber = panelCards[0].split("_")[1];
+    winMessage = `You got 3 ${sameNumber}s!! You win ₦${payout} bonus!!`;
+    handleWinActions(payout, jackpotType, winMessage);
+  } 
+  else if (panelCards.filter(card => card.split("_")[0] === panelCards[0].split("_")[0]).length >= 3) {
+    payout = payoutMultipliers.bonusNumber * selectedBet;
+    jackpotType = "Bonus Number";
+    const sameShape = panelCards[0].split("_")[0];
+    winMessage = `You got 3 ${sameShape}s!! You win ₦${payout} bonus!!`;
+    handleWinActions(payout, jackpotType, winMessage);
   }
-
   if (payout === 0) {
     updateMessage("No win this time. Try again.");
     jackpotTriggered = null;
   }
-
-  if (payout > 0) {
-    userBalance += payout;
-    updateBalanceOnDisplay(userBalance);
-    updateBalanceOnServer(userBalance);
-  }
-
   return payout;
+};
+
+function updateBountyJackpot(cards, jackpotAmount) {
+  const bountyCardBox = document.getElementById('bounty-card-box');
+  const bountyAmountElement = document.getElementById('bounty-amount');
+  
+  bountyCardBox.innerHTML = '';
+
+  cards.forEach(card => {
+    const imgElement = document.createElement('img');
+    imgElement.src = `cards/${card}`;
+    imgElement.alt = `${card} Card`;
+    imgElement.classList.add('bounty-card-image');
+    bountyCardBox.appendChild(imgElement);
+  });
+
+  bountyAmountElement.textContent = `N${jackpotAmount}`;
 }
 
-// async function fetchCards(numPanels) {
-//   try {
-//     const response = await fetch(
-//       "https://randomiser-ongf.onrender.com/getCards",
-//       {
-//         method: "POST",
-//         headers: {
-//           "Content-Type": "application/json",
-//         },
-//         body: JSON.stringify({ numPanels }),
-//       }
-//     );
-
-//     if (!response.ok) {
-//       throw new Error("Failed to fetch cards: " + response.statusText);
-//     }
-
-//     const data = await response.json();
-//     if (data.error) {
-//       console.error("Server Error:", data.error);
-//       return [];
-//     }
-
-//     return data.cards;
-//   } catch (error) {
-//     console.error("Error:", error);
-//     return [];
-//   }
-// }
-
-async function initializeGame(numPanels) {
-  serverResponse = await fetchCards(numPanels);
-
-  if (serverResponse.length > 0) {
-    console.log("Cards received from server:", serverResponse);
-  } else {
-    updateMessage("Server is temporarily down. Please refresh the page", true);
-  }
-}
+updateBountyJackpot(bountyJackpotCards, "2,000,000");
 
 async function checkToken() {
   try {
@@ -364,35 +331,6 @@ function showSessionExpiredAlert() {
   document.getElementById("loginButton").addEventListener("click", () => {
     window.location.href = "/login";
   });
-}
-
-const getUserInfo = () => {
-  const token = localStorage.getItem("token");
-
-  if (!token) {
-    return;
-  }
-
-  fetch("https://slot-backend-f32n.onrender.com/user-info", {
-    method: "GET",
-    headers: {
-      Authorization: token,
-      "Content-Type": "application/json",
-    },
-  })
-    .then((response) => {
-      if (!response.ok) {
-        throw new Error("Failed to fetch user info");
-      }
-      return response.json();
-    })
-    .then((data) => {
-      userBalance = Math.floor(data.balance);
-      userWelcome.innerHTML = `Welcome, ${data.username}`;
-    })
-    .catch((error) => {
-      console.error("Error fetching user info:", error);
-    });
 };
 
 async function updateBalanceOnServer(balance) {
@@ -419,25 +357,60 @@ async function updateBalanceOnServer(balance) {
     }
   } catch (error) {}
 }
+const throttle = (func, limit) => {
+  let lastFunc;
+  let lastTime;
+  return function() {
+    const now = new Date().getTime();
+    if (lastTime && now - lastTime < limit) {
+      clearTimeout(lastFunc);
+      lastFunc = setTimeout(() => {
+        lastTime = now;
+        func.apply(this, arguments);
+      }, limit - (now - lastTime));
+    } else {
+      lastTime = now;
+      func.apply(this, arguments);
+    }
+  };
+};
 
-// Function to fetch winners and update the banner
 const fetchWinners = async () => {
   try {
-    const response = await fetch(
-      "https://slot-backend-f32n.onrender.com/winners"
-    );
+    const response = await fetch("https://slot-backend-f32n.onrender.com/winners");
     const data = await response.json();
     if (data.winners && data.winners.length > 0) {
       const winnersText = data.winners.join(" ");
-      document.getElementById(
-        "winners-banner"
-      ).innerHTML = `<div class="winner-marquee">${winnersText}</div>`;
+      document.getElementById("winners-banner").innerHTML = `<div class="winner-marquee">${winnersText}</div>`;
     }
-  } catch (error) {}
+  } catch (error) {
+    Sentry.captureException(new Error("Error fetching winners:", error));
+  }
 };
 
-fetchWinners();
-setInterval(fetchWinners, 30000);
+const throttledFetchWinners = throttle(fetchWinners, 30000);
+throttledFetchWinners();
+setInterval(throttledFetchWinners, 30000);
+
+let inactivityTimer;
+const INACTIVITY_TIMEOUT = 10 * 60 * 1000;
+
+const stopAnimation = () => {
+  cancelAnimationFrame(game.ani);
+};
+
+const resetInactivityTimer = () => {
+  clearTimeout(inactivityTimer);
+  inactivityTimer = setTimeout(stopAnimation, INACTIVITY_TIMEOUT);
+};
+
+window.addEventListener('mousemove', resetInactivityTimer);
+window.addEventListener('keydown', resetInactivityTimer);
+window.addEventListener('click', resetInactivityTimer);
+window.addEventListener('touchstart', resetInactivityTimer);
+
+resetInactivityTimer();
+
 
 // Utility function to shuffle an array
 function shuffle(array) {
@@ -453,7 +426,7 @@ const displayUserInfo = () => {
   const token = localStorage.getItem("token");
 
   if (!token) {
-    console.log("No token found");
+    Sentry.captureException(new Error("No token found"));
     return;
   }
 
@@ -480,7 +453,7 @@ const displayUserInfo = () => {
       userBalance = data.balance;
     })
     .catch((error) => {
-      console.error("Error fetching user info:", error);
+      Sentry.captureException(new Error("Error fetching user info:", error));
     });
 };
 
@@ -497,10 +470,10 @@ async function saveGameOutcome(
   jackpotType,
   userBalance
 ) {
-  const token = localStorage.getItem("token"); // Get the stored token
+  const token = localStorage.getItem("token");
 
   if (!token) {
-    console.error("No token available.");
+    Sentry.captureException(new Error("No token available."));
     return;
   }
 
@@ -531,9 +504,8 @@ async function saveGameOutcome(
     }
 
     const data = await response.json();
-    console.log("Game outcome saved:", data.message);
   } catch (error) {
-    console.error("Error saving game outcome:", error);
+    Sentry.captureException(new Error("Error saving game outcome:", error));
   }
 }
 
@@ -561,34 +533,6 @@ function makeElement(parent, element, myClass) {
   return el;
 }
 
-// Function to apply styles based on the number of panels
-// function applyStyles() {
-//   const panels = document.querySelectorAll(".panel");
-//   const wheels = document.querySelectorAll(".wheel");
-//   const cardContainers = document.querySelectorAll(".card-container");
-//   const cards = document.querySelectorAll(".card");
-
-//   panels.forEach((panel) => {
-//     panel.style.width = "15dvw";
-//     panel.style.height = `${cardHeight}px`;
-//   });
-
-//   wheels.forEach((wheel) => {
-//     wheel.style.width = "15dvw";
-//     wheel.style.height = `${cardHeight}px`;
-//   });
-
-//   cardContainers.forEach((cardContainer) => {
-//     cardContainer.style.width = "15dvw";
-//     cardContainer.style.height = `${cardHeight}px`;
-//   });
-
-//   cards.forEach((card) => {
-//     card.style.width = "15dvw";
-//     card.style.height = `${cardHeight}px`;
-//   });
-// }
-
 function getToken() {
   const token = localStorage.getItem("token");
   return token;
@@ -599,20 +543,7 @@ function playSound() {
   sound.play();
 }
 
-function updateBalanceOnDisplay(balance) {
-  const userBalanceDisplay = document.getElementById("userBalance");
-
-  // Remove decimal points and format with commas
-  const integerBalance = Math.trunc(balance); 
-  const formattedBalance = integerBalance.toLocaleString('en-NG', { 
-    style: 'currency', 
-    currency: 'NGN' 
-  });
-
-  userBalanceDisplay.innerHTML = `Balance: ${formattedBalance}`;
-}
-
-// Load the confetti script dynamically if not already loaded
+// Load the confetti script
 function loadConfettiScript(callback) {
   if (typeof confetti !== "undefined") {
     callback();
@@ -626,7 +557,7 @@ function loadConfettiScript(callback) {
   document.body.appendChild(script);
 }
 
-// Function to celebrate a big win
+// Confetti
 function celebrateWin() {
   loadConfettiScript(() => {
     confetti({
@@ -645,12 +576,11 @@ const form = document.getElementById("updateProfileForm");
 // Open the modal when the profile link is clicked
 document.getElementById("viewProfile").addEventListener("click", function () {
   modal.style.display = "block";
-  // Fetch user data and populate the form fields
   fetchUserProfile();
 });
 
 // Close the modal when the close button is clicked
-let isFormChanged = false; // To track if any field has been changed
+let isFormChanged = false;
 
 closeBtn.addEventListener("click", function () {
   if (isFormChanged) {
@@ -677,7 +607,6 @@ form.addEventListener("submit", function (event) {
   };
 
   const token = localStorage.getItem("token");
-  // Send PUT request to update the profile
   fetch("https://slot-backend-f32n.onrender.com/update-profile", {
     method: "PUT",
     headers: {
@@ -690,19 +619,19 @@ form.addEventListener("submit", function (event) {
     .then((data) => {
       if (data.message) {
         alert("Profile updated successfully!");
-        modal.style.display = "none"; // Close the modal
-        isFormChanged = false; // Reset the change flag
+        modal.style.display = "none";
+        isFormChanged = false;
       } else {
         alert("Error updating profile: " + data.error);
       }
     })
     .catch((error) => {
-      console.error("Error:", error);
+      Sentry.captureException(new Error("Error:", error));
       alert("An error occurred while updating the profile");
     });
 });
 
-// Fetch user profile data (e.g., when opening the modal)
+// Fetch user profile data
 function fetchUserProfile() {
   const token = localStorage.getItem("token");
   fetch("https://slot-backend-f32n.onrender.com/user-info", {
@@ -713,7 +642,7 @@ function fetchUserProfile() {
   })
     .then((response) => response.json())
     .then((data) => {
-      // Set default values or placeholders if fields are empty
+      // Set default values
       document.getElementById("user_id").value = data.user_id;
       document.getElementById("username").value = data.username || "";
       document.getElementById("email").value = data.email || "";
@@ -735,7 +664,7 @@ function fetchUserProfile() {
       setPlaceholderText("account_name", "Enter your account name here");
     })
     .catch((error) => {
-      console.error("Error fetching user profile:", error);
+      Sentry.captureException(new Error("Error fetching user profile:", error));
     });
 }
 
@@ -759,7 +688,7 @@ const formFields = [
 formFields.forEach((field) => {
   const input = document.getElementById(field);
   input.addEventListener("input", function () {
-    isFormChanged = true; // Mark as changed if any field is modified
+    isFormChanged = true;
   });
 });
 
@@ -773,9 +702,9 @@ document.addEventListener("DOMContentLoaded", function () {
   // Function to toggle the dropdown menu
   function toggleDropdown() {
     if (isDropdownOpen) {
-      dropdownMenu.style.display = "none"; // Close the dropdown
+      dropdownMenu.style.display = "none";
     } else {
-      dropdownMenu.style.display = "block"; // Open the dropdown
+      dropdownMenu.style.display = "block"; 
     }
     isDropdownOpen = !isDropdownOpen; // Toggle the state
   }
@@ -793,14 +722,52 @@ document.addEventListener("DOMContentLoaded", function () {
       !dropdownMenu.contains(event.target)
     ) {
       if (isDropdownOpen) {
-        dropdownMenu.style.display = "none"; // Hide the dropdown
-        isDropdownOpen = false; // Update the state
+        dropdownMenu.style.display = "none";
+        isDropdownOpen = false; 
       }
     }
   });
 
   // Prevent closing dropdown when clicking inside the menu
   dropdownMenu.addEventListener("click", function (event) {
-    event.stopPropagation(); // Prevent the document click listener from closing the dropdown
+    event.stopPropagation(); 
   });
 });
+
+async function fetchBountyJackpotPrize() {
+  try {
+    const response = await fetch('https://slot-backend-f32n.onrender.com/bounty-jackpot');
+    const data = await response.json();
+    const jackpotAmount = data.bountyPrize;
+    updateBountyJackpot(jackpotAmount);
+  } catch (error) {
+    Sentry.captureException(new Error('Error fetching jackpot prize:', error));
+  }
+}
+
+function updateBountyJackpot(amount) {
+  const bountyAmountElement = document.getElementById('bounty-amount');
+  if (bountyAmountElement) {
+    bountyAmountElement.innerText = `₦${Math.floor(amount).toLocaleString()}`;
+  } else {
+    Sentry.captureException(new Error('Element with id "bounty-amount" not found.'));
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  fetchBountyJackpotPrize();
+  setInterval(fetchBountyJackpotPrize, 60000);  // Fetch every minute
+});
+
+function updateBountyJackpotCards(cards) {
+  const bountyCardBox = document.getElementById('bounty-card-box');  
+  bountyCardBox.innerHTML = '';
+
+  cards.forEach(card => {
+    const imgElement = document.createElement('img');
+    imgElement.src = `cards/${card}`;
+    imgElement.alt = `${card} Card`;
+    imgElement.classList.add('bounty-card-image');
+    bountyCardBox.appendChild(imgElement);
+  });
+};
