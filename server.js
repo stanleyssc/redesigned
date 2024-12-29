@@ -13,7 +13,7 @@ app.use(express.json());
 app.get('/', (req, res) => {
   res.status(200).json({
     status: 'success',
-    message: 'Server is live and running!f',
+    message: 'Server is live and running!g',
   });
 });
 
@@ -359,6 +359,51 @@ app.put('/update-profile', authenticate, (req, res) => {
     res.status(200).json({ message: 'Profile updated successfully' });
   });
 });
+
+//Bounty Jackpot
+app.get('/bounty-jackpot', async (req, res) => {
+  const BASE_PRIZE = 5000; 
+  const PERCENTAGE = 0.01; 
+
+  try {
+    const lastWinQuery = `
+      SELECT MAX(created_at) AS lastWinTime
+      FROM game_outcomes
+      WHERE jackpot_type = 'bounty'
+    `;
+
+    db.query(lastWinQuery, (err, result) => {
+      if (err) {
+        console.error('Error fetching last bounty win time:', err);
+        return res.status(500).json({ error: 'Error calculating bounty prize' });
+      }
+
+      const lastWinTime = result[0].lastWinTime;
+
+      const totalBetsQuery = `
+        SELECT SUM(bet_amount) * ? AS prizePool
+        FROM game_outcomes
+        WHERE created_at > ? OR ? IS NULL
+      `;
+
+      db.query(totalBetsQuery, [PERCENTAGE, lastWinTime, lastWinTime], (err, result) => {
+        if (err) {
+          console.error('Error calculating total bets:', err);
+          return res.status(500).json({ error: 'Error calculating bounty prize' });
+        }
+
+        const calculatedPrize = result[0].prizePool || 0;
+        const currentPrize = Math.max(BASE_PRIZE, calculatedPrize);
+
+        res.status(200).json({ bountyPrize: currentPrize });
+      });
+    });
+  } catch (error) {
+    console.error('Unexpected error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 
 const PORT = process.env.PORT || 3000;
 
