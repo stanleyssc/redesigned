@@ -5,25 +5,31 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>WSG</title>
   <link rel="stylesheet" href="style.css">
+  <script type="module" src="https://js-de.sentry-cdn.com/efcedd90866cd0c12c2144245e25eca9.min.js"
+  crossorigin="anonymous"
+></script>
 </head>
 <body>
 <!-- Top Navigation -->
 <header class="top-nav">
   <div class="user-info">
     <span class="welcome-message" id="welcome-message">Welcome, User</span>
-    <button class="landing-page" id="landing-page">Back to Home</button>
+    <a href="landing-page.html" class="landing-page" id="landing-page">Back to Home</a>
     <button class="deposit" id="deposit">Deposit</button>
     <div class="dropdown">
       <button class="accountSettings" id="accountSettings">Account Settings</button>
-      <div class="dropdown-menu" id="dropdownMenu"> <!-- Corrected ID -->
+      <div class="dropdown-menu" id="dropdownMenu">
         <a href="javascript:void(0);" id="viewProfile">Profile</a>
         <a href="#betHistory">Bet History</a>
         <a href="#help">Help</a>
       </div>
     </div>
-    <button class="logout-button" id="logout-button">Logout</button>
   </div>
+  <!-- Logout link as a standalone element -->
+  <a href="index.html" class="logout" id="logout">Logout</a>
 </header>
+
+
 
 <!-- Profile Update Modal -->
 <div class="modal" id="updateProfileModal">
@@ -61,14 +67,16 @@
 </div>
 
 
-  <script>
-    document.getElementById('landing-page').addEventListener('click', () => {
-        window.location.href = 'landing-page.html'; // Redirect to the home page
-    });
+<script>
+  document.getElementById('landing-page').addEventListener('click', (event) => {
+    event.preventDefault(); 
+    window.location.href = 'landing-page.html'; 
+  });
 
-    document.getElementById('logout-button').addEventListener('click', () => {
-        window.location.href = 'index.html'; // Redirect to the login page
-    });
+  document.getElementById('logout').addEventListener('click', (event) => {
+    event.preventDefault();
+    window.location.href = 'index.html';
+  });
 </script>
   
   <!-- Header Section -->
@@ -110,7 +118,78 @@
   <div class="messageBox">
     Please select your bet.
   </div>
-  
+
+  <div class="info" id="info">
+  <!-- Jackpot Box -->
+<div class="bounty-box" id="bounty-box">
+  <div class="bounty-row-container">
+    <!-- Bounty Jackpot -->
+    <div class="bounty-plate" id="bounty-plate">
+      <div class="bounty-card-box" id="bounty-card-box">
+        
+      </div>
+      <div class="bounty-jackpot-message" id="bounty-jackpot-message">
+        <h3>Progressive Jackpot!! <span id="bounty-amount">NGN</span></h3>
+      </div>
+    </div>
+    </div>
+    </div>
+    </div>
+
+<!-- Jackpot Box -->
+<div class="jackpot-box" id="jackpot-box">
+  <div class="jackpot-row-container">
+    <!-- Ultimate Jackpot -->
+    <div class="plate" id="plate">
+      <div class="card-box" id="card-box">
+        <img src="cards/whot_20.png" alt="WHOT_20 Card" class="card-image">
+        <img src="cards/whot_20.png" alt="Circle Card" class="card-image">
+        <img src="cards/whot_20.png" alt="Star Card" class="card-image">
+        <img src="cards/whot_20.png" alt="Square Card" class="card-image">
+      </div>
+      <div class="jackpot-message" id="ultimate-jackpot-message">
+        <h3>Ultimate Jackpot! Win 2000 times your bet amount</h3>
+      </div>
+    </div>
+    <!-- Platinum-->
+    <div class="plate" id="plate">
+      <div class="card-box" id="card-box">
+        <img src="cards/circle_13.png" alt="WHOT_20 Card" class="card-image">
+        <img src="cards/circle_13.png" alt="Circle Card" class="card-image">
+        <img src="cards/circle_13.png" alt="Star Card" class="card-image">
+        <img src="cards/circle_13.png" alt="Square Card" class="card-image">
+      </div>
+      <div class="jackpot-message" id="gold-jackpot-message">
+        <h3>Platinum Jackpot! Win 2000 times your bet amount</h3>
+      </div>
+    </div>
+      <!-- Gold-->
+      <div class="plate" id="plate">
+        <div class="card-box" id="card-box">
+          <img src="cards/cross_1.png" alt="WHOT_20 Card" class="card-image">
+          <img src="cards/triangle_1.png" alt="Circle Card" class="card-image">
+          <img src="cards/star_1.png" alt="Star Card" class="card-image">
+          <img src="cards/square_1.png" alt="Square Card" class="card-image">
+        </div>
+        <div class="jackpot-message" id="gold-jackpot-message">
+          <h3>Gold Jackpot! Win 2000 times your bet amount</h3>
+        </div>
+      </div>
+    <!-- Silver Jackpot -->
+    <div class="plate" id="plate">
+      <div class="card-box" id="card-box">
+        <img src="cards/square_10.png" alt="WHOT_20 Card" class="card-image">
+        <img src="cards/square_1.png" alt="Circle Card" class="card-image">
+        <img src="cards/square_3.png" alt="Star Card" class="card-image">
+        <img src="cards/square_13.png" alt="Square Card" class="card-image">
+      </div>
+      <div class="jackpot-message" id="silver-jackpot-message">
+        <h3>Silver Jackpot! Win 2000 times your bet amount</h3>
+      </div>
+    </div>
+    </div>
+</div>
+</div>
 <script src="slot.js"></script>
 </body>
 </html>
