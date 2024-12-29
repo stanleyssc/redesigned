@@ -360,18 +360,38 @@ app.put('/update-profile', authenticate, (req, res) => {
   });
 });
 
-//Bounty Jackpot
-app.get('/bounty-jackpot', async (req, res) => {
-  const BASE_PRIZE = 1000; 
-  const PERCENTAGE = 0.01; 
+//Bounty prize
+const redis = require('redis');
+const redisClient = redis.createClient({ host: process.env.REDIS_HOST, port: process.env.REDIS_PORT });
 
+const getCachedBountyPrize = async () => {
+  return new Promise((resolve, reject) => {
+    redisClient.get('bountyPrize', (err, data) => {
+      if (err) reject(err);
+      resolve(data ? JSON.parse(data) : null);
+    });
+  });
+};
+
+const cacheBountyPrize = (prize) => {
+  redisClient.setex('bountyPrize', 180, JSON.stringify(prize));
+};
+
+app.get('/bounty-jackpot', async (req, res) => {
   try {
+    const cachedPrize = await getCachedBountyPrize();
+    if (cachedPrize) {
+      return res.status(200).json({ bountyPrize: cachedPrize });
+    }
+
+    const BASE_PRIZE = 1000;
+    const PERCENTAGE = 0.01;
+
     const lastWinQuery = `
       SELECT MAX(created_at) AS lastWinTime
       FROM game_outcomes
       WHERE jackpot_type = 'bounty'
     `;
-
     db.query(lastWinQuery, (err, result) => {
       if (err) {
         console.error('Error fetching last bounty win time:', err);
@@ -395,6 +415,9 @@ app.get('/bounty-jackpot', async (req, res) => {
         const calculatedPrize = result[0].prizePool || 0;
         const currentPrize = Math.max(BASE_PRIZE, calculatedPrize);
 
+        // Cache the result
+        cacheBountyPrize(currentPrize);
+
         res.status(200).json({ bountyPrize: currentPrize });
       });
     });
@@ -403,7 +426,6 @@ app.get('/bounty-jackpot', async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
-
 
 const PORT = process.env.PORT || 3000;
 
