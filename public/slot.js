@@ -82,7 +82,7 @@ function init() {
       cardDiv.append(img);
     });
   }
-  applyStyles();
+  // applyStyles();
 }
 
 function startSpin() {
@@ -562,32 +562,32 @@ function makeElement(parent, element, myClass) {
 }
 
 // Function to apply styles based on the number of panels
-function applyStyles() {
-  const panels = document.querySelectorAll(".panel");
-  const wheels = document.querySelectorAll(".wheel");
-  const cardContainers = document.querySelectorAll(".card-container");
-  const cards = document.querySelectorAll(".card");
+// function applyStyles() {
+//   const panels = document.querySelectorAll(".panel");
+//   const wheels = document.querySelectorAll(".wheel");
+//   const cardContainers = document.querySelectorAll(".card-container");
+//   const cards = document.querySelectorAll(".card");
 
-  panels.forEach((panel) => {
-    panel.style.width = "15dvw";
-    panel.style.height = `${cardHeight}px`;
-  });
+//   panels.forEach((panel) => {
+//     panel.style.width = "15dvw";
+//     panel.style.height = `${cardHeight}px`;
+//   });
 
-  wheels.forEach((wheel) => {
-    wheel.style.width = "15dvw";
-    wheel.style.height = `${cardHeight}px`;
-  });
+//   wheels.forEach((wheel) => {
+//     wheel.style.width = "15dvw";
+//     wheel.style.height = `${cardHeight}px`;
+//   });
 
-  cardContainers.forEach((cardContainer) => {
-    cardContainer.style.width = "15dvw";
-    cardContainer.style.height = `${cardHeight}px`;
-  });
+//   cardContainers.forEach((cardContainer) => {
+//     cardContainer.style.width = "15dvw";
+//     cardContainer.style.height = `${cardHeight}px`;
+//   });
 
-  cards.forEach((card) => {
-    card.style.width = "15dvw";
-    card.style.height = `${cardHeight}px`;
-  });
-}
+//   cards.forEach((card) => {
+//     card.style.width = "15dvw";
+//     card.style.height = `${cardHeight}px`;
+//   });
+// }
 
 function getToken() {
   const token = localStorage.getItem("token");
@@ -601,7 +601,15 @@ function playSound() {
 
 function updateBalanceOnDisplay(balance) {
   const userBalanceDisplay = document.getElementById("userBalance");
-  userBalanceDisplay.innerHTML = `Balance: ₦${balance}`;
+
+  // Remove decimal points and format with commas
+  const integerBalance = Math.trunc(balance); 
+  const formattedBalance = integerBalance.toLocaleString('en-NG', { 
+    style: 'currency', 
+    currency: 'NGN' 
+  });
+
+  userBalanceDisplay.innerHTML = `Balance: ${formattedBalance}`;
 }
 
 // Load the confetti script dynamically if not already loaded
@@ -776,13 +784,6 @@ document.addEventListener("DOMContentLoaded", function () {
   dropdownButton.addEventListener("click", function (event) {
     event.stopPropagation();
     toggleDropdown();
-  });
-
-  dropdownButton.addEventListener("mouseenter", function () {
-    if (!isDropdownOpen) {
-      dropdownMenu.style.display = "block";
-      isDropdownOpen = true;
-    }
   });
 
   // Close dropdown if clicking anywhere outside
