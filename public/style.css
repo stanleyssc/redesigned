@@ -394,6 +394,7 @@ body {
   }
 }
 
+/* General Styles */
 .top-nav {
   padding: 10px 20px;
   background-color: #021a02;
@@ -404,13 +405,15 @@ body {
   flex-wrap: wrap;
   border-bottom: 2px solid #0056b3;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  position: relative; 
 }
 
+/* User Info Section */
 .user-info {
   display: flex;
   align-items: center;
-  gap: 15px; /* Space between items */
-  flex-wrap: wrap; /* Allows wrapping on smaller screens */
+  gap: 15px; 
+  flex-wrap: wrap; 
 }
 
 .user-info span {
@@ -419,6 +422,31 @@ body {
   color: #ffcc00;
 }
 
+/* Logout Link */
+.logout {
+  position: absolute; 
+  top: 10px; 
+  right: 20px; 
+  color: white; 
+  text-decoration: none; 
+  font-size: 0.9em; 
+  font-weight: bold;
+  transition: color 0.3s ease, background-color 0.3s ease;
+}
+.landing-page {
+  color: white; 
+  text-decoration: none; 
+  font-size: 0.9em; 
+  font-weight: bold;
+  transition: color 0.3s ease, background-color 0.3s ease;
+}
+
+.logout:hover {
+  color: #ffcc00; 
+  text-decoration: underline;
+}
+
+/* Button Styles */
 .user-info button {
   padding: 10px 15px;
   border: none;
@@ -432,10 +460,11 @@ body {
 }
 
 .user-info button:hover {
-  background-color: #0056b3; /* Darker blue */
+  background-color: #0056b3;
   transform: scale(1.05);
 }
 
+/* Dropdown Styles */
 .dropdown {
   position: relative;
 }
@@ -473,14 +502,6 @@ body {
   display: block;
 }
 
-.logout-button {
-  background-color: #dc3545; /* Red */
-}
-
-.logout-button:hover {
-  background-color: #b22b36; /* Darker red */
-}
-
 /* Responsive Design */
 @media (max-width: 768px) {
   .user-info {
@@ -490,7 +511,14 @@ body {
 
   .user-info button,
   .user-info span {
-    flex: 1 0 auto; /* Allow buttons to resize */
+    flex: 1 0 auto;
+  }
+
+  .logout {
+    position: static;
+    margin-top: 10px;
+    text-align: right;
+    width: 100%; 
   }
 
   .dropdown-menu {
@@ -511,15 +539,15 @@ body {
 
 /* Style for the profile modal */
 .modal {
-  display: none; /* Hidden by default */
-  position: fixed; /* Stay in place */
-  z-index: 1; /* Sit on top */
+  display: none; 
+  position: fixed; 
+  z-index: 1; 
   left: 0;
   top: 0;
   width: 100%;
   height: 100%;
-  overflow: auto; /* Enable scroll if needed */
-  background-color: rgba(0, 0, 0, 0.5); /* Black with opacity */
+  overflow: auto; 
+  background-color: rgba(0, 0, 0, 0.5); 
 }
 
 /* Modal content */
@@ -577,3 +605,151 @@ button:hover {
   background-color: #45a049;
 }
 
+.info {
+  display: flex;
+}
+
+.jackpot-box {
+  position: relative;
+  border: #74e3f5;
+  border-style: double;
+  background-color: #225910;
+  border-radius: 10px;
+  width: 90vw;
+  max-width: 450px;
+  margin: 2px auto;
+  padding: 5px;
+  height: 20dvh;
+  max-height: 171px;
+  min-height: 171px;
+  gap: 1px;
+}
+
+.jackpot-row-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+  border-radius: 10px;
+}
+
+.plate {
+  width: 100%;
+  display: flex;
+  border-radius: 10px;
+  height: 40px;
+  margin: auto;
+}
+
+.card-box {
+  display: flex;
+  width: 180px;
+  justify-content: flex-start;
+  background-color: #4d004d;
+  border-radius: 10px;
+  height: 40px;
+  margin: auto;
+}
+
+.card-image {
+  width: 38px;
+  height:38px;
+  border-radius: 5px;
+  margin: auto;
+
+}
+
+.jackpot-message {
+  width: 280px;
+  height: 38px;
+  display: flex;
+  font-family: Verdana, Geneva, Tahoma, sans-serif;
+  color: #0c0101;
+  font-size: 8px;
+  align-items: center;
+  background-color: rgb(239, 236, 220);
+  padding: 2px;
+  border-radius: 5px;
+  font-weight: 100;
+}
+
+.bounty-box {
+  position: relative;
+  border: #74e3f5;
+  border-style: double;
+  background-color: #225910;
+  border-radius: 10px;
+  width: 90vw;
+  max-width: 450px;
+  margin: 2px auto;
+  padding: 5px;
+  height: 20dvh;
+  max-height: 85px;
+  min-height: 85px;
+  gap: 1px;
+}
+
+.bounty-row-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  margin-bottom: 30px;
+  border-radius: 10px;
+}
+
+.bounty-plate {
+  width: 100%;
+  display: flex;
+  border-radius: 10px;
+  height: 70px;
+  margin: auto;
+}
+
+.bounty-card-box {
+  display: flex;
+  width: auto;
+  justify-content: flex-start;
+  background-color: #4d004d;
+  border-radius: 10px;
+  height: 70px;
+  margin: 0;
+}
+
+.bounty-card-image {
+  width: 70px;
+  height:70px;
+  border-radius: 5px;
+  margin: 0 2px;
+}
+
+.bounty-jackpot-message {
+  width: 150px;
+  height: 70px;
+  display: flex;
+  font-family: Verdana, Geneva, Tahoma, sans-serif;
+  color: #0c0101;
+  font-size: 14px;
+  align-items: center;
+  background-color: rgb(239, 236, 220);
+  padding: 10px;
+  border-radius: 5px;
+  font-weight: 100;
+  animation: blink 1s step-start infinite, glow 1.5s ease-in-out infinite;
+}
+
+@keyframes glow {
+  0% {
+    text-shadow: 0 0 5px #ff6600, 0 0 10px #ff6600, 0 0 15px #ff6600, 0 0 20px #ff6600;
+  }
+  100% {
+    text-shadow: 0 0 10px #ff6600, 0 0 20px #ff6600, 0 0 30px #ff6600, 0 0 40px #ff6600;
+  }
+}
+
+@keyframes blink {
+  50% {
+    opacity: 50%;
+  }
+}
