@@ -13,7 +13,7 @@ app.use(express.json());
 app.get('/', (req, res) => {
   res.status(200).json({
     status: 'success',
-    message: 'Server is live and running!H',
+    message: 'Server is live and running!i',
   });
 });
 
@@ -379,6 +379,11 @@ const cacheBountyPrize = (prize) => {
 
 app.get('/bounty-jackpot', async (req, res) => {
   try {
+    const panelType = req.query.panelType;
+    if (!panelType || (panelType !== '3' && panelType !== '4')) {
+      return res.status(400).json({ error: 'Invalid panel type. Please use "3" or "4".' });
+    }
+
     const cachedPrize = await getCachedBountyPrize();
     if (cachedPrize) {
       return res.status(200).json({ bountyPrize: cachedPrize });
@@ -386,6 +391,8 @@ app.get('/bounty-jackpot', async (req, res) => {
 
     const BASE_PRIZE = 1000;
     const PERCENTAGE = 0.01;
+    const FOUR_PANEL_MULTIPLIER = 0.8;
+    const THREE_PANEL_MULTIPLIER = 0.2;
 
     const lastWinQuery = `
       SELECT MAX(created_at) AS lastWinTime
@@ -415,10 +422,19 @@ app.get('/bounty-jackpot', async (req, res) => {
         const calculatedPrize = result[0].prizePool || 0;
         const currentPrize = Math.max(BASE_PRIZE, calculatedPrize);
 
-        // Cache the result
-        cacheBountyPrize(currentPrize);
+        const prizeForFourPanels = currentPrize * FOUR_PANEL_MULTIPLIER;
+        const prizeForThreePanels = currentPrize * THREE_PANEL_MULTIPLIER;
 
-        res.status(200).json({ bountyPrize: currentPrize });
+        let adjustedPrize;
+        if (panelType === '4') {
+          adjustedPrize = prizeForFourPanels;
+        } else {
+          adjustedPrize = prizeForThreePanels;
+        }
+
+        cacheBountyPrize(adjustedPrize);
+
+        res.status(200).json({ bountyPrize: adjustedPrize });
       });
     });
   } catch (error) {
