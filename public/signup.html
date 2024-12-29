@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sign Up</title>
   <link rel="stylesheet" href="styles.css">
+  <script type="module" src="https://js-de.sentry-cdn.com/efcedd90866cd0c12c2144245e25eca9.min.js"
+  crossorigin="anonymous"
+></script>
 </head>
 <body>
   <div class="container">
@@ -24,13 +27,14 @@
       
       <button type="submit">Sign Up</button>
     </form>
-    <p>Already have an account? <a href="index.html">Log in here</a>.</p>
+    <p id="loginText">Already have an account? <a href="index.html">Log in here</a>.</p>
     <p id="statusMessage"></p> <!-- To display success or error messages -->
   </div>
 
   <script>
     const signupForm = document.getElementById('signupForm');
     const statusMessage = document.getElementById('statusMessage');
+    const loginText = document.getElementById('loginText'); // Reference to the "already have an account" text
 
     signupForm.addEventListener('submit', (e) => {
       e.preventDefault();
@@ -61,8 +65,11 @@
             statusMessage.textContent = 'Signup successful! Redirecting to your dashboard...';
             statusMessage.style.color = 'green';
 
+            // Hide the "Already have an account?" text
+            loginText.style.display = 'none';
+
             // Automatically log the user in after successful registration
-            return fetch('https://slotgame-backend.onrender.com/login', {
+            return fetch('https://slot-backend-f32n.onrender.com/login', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ username, password })
@@ -84,7 +91,7 @@
           window.location.href = 'landing-page.html';
         })
         .catch((error) => {
-          console.error('Error during signup or login:', error);
+          Sentry.captureException(new Error('Error during signup or login:', error));
           statusMessage.textContent = 'An error occurred. Please try again.';
           statusMessage.style.color = 'red';
         });
