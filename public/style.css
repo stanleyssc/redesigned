@@ -88,23 +88,28 @@ body {
 /* Bet Selection */
 .bet-selection {
   display: flex;
-  gap: 15px;
+  gap: 12px;
   justify-content: center;
   align-items: center;
   background: linear-gradient(145deg, #ff6600, #ff0033);
   border-radius: 20px;
-  padding: 5px;
-  box-shadow: 0 4px 15px rgba(255, 102, 0, 0.6);
+  padding: 3px;
+  box-shadow: 0 20px 35px rgba(255, 102, 0, 0.6);
 }
 
 .bet-button {
-  width: 60px;
-  height: 60px;
+  width: 59px;
+  height: 59px;
+  max-width: 59px;
+  max-height: 59px;
+  min-width: 59px;
+  min-height: 59px;
+  margin: auto;
   border-radius: 50%;
   background: #df73eb;
   border: 2px solid #13a02b;
   color: #000000;
-  font-size: 0.7em;
+  font-size: 0.6rem;
   cursor: pointer;
   transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
 }
