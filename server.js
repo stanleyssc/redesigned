@@ -13,7 +13,7 @@ app.use(express.json());
 app.get('/', (req, res) => {
   res.status(200).json({
     status: 'success',
-    message: 'Server is live and running!g',
+    message: 'Server is live and running!H',
   });
 });
 
@@ -362,7 +362,7 @@ app.put('/update-profile', authenticate, (req, res) => {
 
 //Bounty Jackpot
 app.get('/bounty-jackpot', async (req, res) => {
-  const BASE_PRIZE = 5000; 
+  const BASE_PRIZE = 1000; 
   const PERCENTAGE = 0.01; 
 
   try {
