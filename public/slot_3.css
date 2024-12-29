@@ -1,0 +1,756 @@
+/* General Reset */
+body {
+    font-family: 'Montserrat', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #001f00;
+    background: radial-gradient(circle, #003300, #001a00);
+    color: #ffffff;
+    overflow-x: hidden;
+  }
+  
+  /* General Reset */
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+  
+  .logo {
+    display: inline-block;
+    width: 100%;
+    font-size: 0.5em; 
+    font-weight: bold;
+    color: #ffcc00; 
+    background: linear-gradient(90deg, #007bff, #0056b3); 
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-transform: uppercase; 
+    letter-spacing: 1.5px; 
+    padding: 0.1vw;
+    margin: 0.2vw 0vw ;
+    border: 0.1vw solid #007bff; 
+    border-radius: 10px; 
+  
+    text-align: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .welcome-message:hover {
+    transform: scale(1.05); 
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
+  }
+  
+  .main-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(145deg, #aceeb4, #53e950);
+    border-radius: 20px;
+    width: 90vw;
+    max-width: 450px;
+    margin: 5px auto;
+    padding: 5px;
+    height: 50dvh;
+    max-height: 280px;
+    box-shadow: 0 4px 20px rgba(255, 0, 102, 0.6);
+    min-height: 280px;
+  }
+  
+  /* Top Panel: Account Balance + Bet Selection */
+  .top-panel {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 3px;
+  }
+  
+  /* Account Balance */
+  .account-balance {
+    font-size: 0.6em;
+    padding: 3px;
+    border: 3px solid #ffff00;
+    border-radius: 10px;
+    background: linear-gradient(to right, #0033ff, #ff6600);
+    color: #ffffff;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(255, 255, 0, 0.6);
+    transition: transform 0.3s ease-in-out, color 0.3s;
+  }
+  
+  .account-balance.win {
+    transform: scale(1.2);
+    color: gold;
+    box-shadow: 0 0 30px #ffcc00, 0 0 50px #ffcc00;
+  }
+  
+  /* Bet Selection */
+  .bet-selection {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(145deg, #069527, #88de88);
+    border-radius: 20px;
+    padding: 3px;
+    box-shadow: 0 20px 35px rgba(255, 102, 0, 0.6);
+  }
+  
+  .bet-button {
+    width: 59px;
+    height: 59px;
+    max-width: 59px;
+    max-height: 59px;
+    min-width: 49px;
+    min-height: 49px;
+    margin: auto;
+    border-radius: 50%;
+    background: #ebe6c5;
+    border: 2px solid #13a02b;
+    color: #000000;
+    font-size: 0.5rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+  }
+  
+  .bet-button.active {
+    background-color: #010d01;
+    color: #ffffff;
+    box-shadow: 0 0 15px #00ff00, 0 0 30px #00ff00;
+    font-weight: bold;
+    border: 2px solid white;
+  }
+  
+  .bet-button:hover {
+    background: linear-gradient(to bottom, #00ff00, #00cc00);
+    transform: scale(1.1);
+    box-shadow: 0 0 20px #00ff00, 0 0 40px #00ff00;
+  }
+  
+  /* Slot box */
+  .slot-outer-box {
+    width: 100%;
+    height: 45%;
+    background: linear-gradient(145deg, #ebd212, #65e80e);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 20px;
+    box-shadow: 0 4px 20px rgba(3, 203, 23, 0.6);
+    margin: 5px;
+    max-width: 320px;
+    max-height: 135px;
+    min-width: 320px;
+    min-height: 135px;
+    }
+  
+  .slot-mid-box {
+    width: 98%;
+    height: 98%;
+    background: linear-gradient(145deg, #5aec0c, #4d004d);
+    border-radius: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    max-width: 310px;
+    max-height: 130px;
+    min-width: 310px;
+    min-height: 130px;
+  }
+  
+  .slot-inner-box {
+    width: 96%;
+    height: 96%;
+    background: #19dd15;
+    border-radius: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 304px;
+    max-height: 125px;
+    min-width: 304px;
+    min-height: 125px;
+  }
+  
+  .slot-display {
+    display: flex;
+    gap: 2px;
+    justify-content: space-between;
+    border-radius: 20px;
+    height: 100%;
+    width: 100%;
+    max-width: 304px;
+    max-height: 125px;
+    min-width: 304px;
+    min-height: 125px;
+    transform: perspective(1000px) rotateX(5deg);
+    box-shadow: inset 0 0 20px #d0f183, 0 0 20px rgba(3, 62, 40, 0.2);
+  }
+  
+  /* Spin Button */
+  .spin-button {
+    font-size: 1.5em;
+    padding: 15px 30px;
+    background: linear-gradient(to right, #4f27e0, #c4c2f2);
+    color: #ffffff;
+    border-radius: 50px;
+    cursor: pointer;
+    animation: pulse 2s infinite ease-in-out; /* Apply the pulse animation */
+    box-shadow: 0 4px 15px rgba(255, 153, 0, 0.6);
+    transition: transform 0.2s ease, box-shadow 0.3s ease;
+  }
+  
+  .spin-button:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 20px #ff9900, 0 0 40px #ff3300;
+  }
+  
+  .spin-button:active {
+    transform: scale(0.9);
+  }
+  
+  .spin-button:disabled {
+    background: #d3d3d3;
+    color: #a0a0a0;
+    box-shadow: none;
+    transform: scale(0.95);
+  }
+  
+  /* Refined Pulse Animation */
+  @keyframes pulse {
+    0% {
+      transform: scale(1);
+      box-shadow: 0 0 10px #b97b4e, 0 0 20px #b97b4e;
+    }
+    50% {
+      transform: scale(1.05); /* Slight growth */
+      box-shadow: 0 0 30px #ff6600, 0 0 50px #ff6600;
+    }
+    100% {
+      transform: scale(1);
+      box-shadow: 0 0 10px #b97b4e, 0 0 20px #b97b4e;
+    }
+  }
+  
+  
+  .panel {
+    width: 15dvw;
+    height: 100%;
+    max-width: 100px;
+    min-width: 100px;
+    overflow: hidden;
+    background: #74e3f5;
+    position: relative;
+    border-radius: 20px;
+    max-height: 125px;
+    min-height: 125px;
+  }
+  
+  .wheel {
+    display: flex;
+    flex-direction: column;
+    border-radius: 20px;
+    animation: rotate 2s infinite linear;
+    position: absolute;
+    width: 15dvw;
+    height: 100%;
+    max-width: 100px;
+    min-width: 100px;
+    max-height: 125px;
+    min-height: 125px;
+  }
+  
+  .card-container {
+    width: 15dvw;
+    border-radius: 20px;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 5px;
+    max-width: 100px;
+    min-width: 100px;
+    max-height: 125px;
+    min-height: 125px;
+  }
+  
+  .card {
+    width: 15dvw;
+    border-radius: 20px;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 5px;
+    max-width: 100px;
+    min-width: 100px;
+    max-height: 120px;
+    min-height: 120px;
+  }
+  
+  .card img {
+    width: 14dvw;
+    height: 99%;
+    border-radius: 5px;
+    border: 0.5px solid white;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), inset 0 0 10px rgba(255, 255, 255, 0.5);
+    max-width: 100px;
+    min-width: 100px;
+    max-height: 120px;
+    min-height: 120px;
+  }
+  
+  .messageBox{
+    width: 90vw;
+    max-width: 450px;
+    background-color: #f5f5f5;
+    border-radius: 10px;
+    position: relative;
+    padding: 20px;
+    color: #28a745;
+    font-family: Georgia, 'Times New Roman', Times, serif;
+    font-size: 1.4em;
+    border-style: double;
+    margin-right: auto;
+    margin-left: auto;
+    text-align: center;
+  }
+  
+  /* Mobile optimization */
+  @media (max-width: 768px) {
+    .main-container {
+      width: 95vw;
+      height: 85vh;
+    }
+  
+    .bet-button {
+      width: 40px;
+      height: 40px;
+      font-size: 16px;
+    }
+  
+    .account-balance {
+      font-size: 1em;
+      padding: 5px;
+    }
+  
+    .spin-button {
+      font-size: 1.2em;
+      padding: 8px 16px;
+    }
+  }
+  
+  .winners-banner {
+    padding: 0px;
+    height: 5dvh;
+    background: linear-gradient(90deg, #ff6600, #ffd700); 
+    color: rgb(1, 0, 0); 
+    font-size: 1.2em;
+    /* font-weight: bold; */
+    width: 105dvw;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    border-radius: 5px; 
+    box-shadow: 0 2px 5px rgba(255, 140, 0, 0.6); 
+    animation: bannerGlow 3s infinite alternate;
+    position: relative;
+  }
+  
+  .winners-banner .winner-marquee {
+    display: inline-block;
+    white-space: nowrap;
+    animation: marquee 80s linear infinite; /* Smooth scrolling text */
+    background: -webkit-linear-gradient(90deg, #ffffff, #ffd700, #ffffff);
+    -webkit-background-clip: text;
+    
+  }
+  
+  @keyframes bannerGlow {
+    0% {
+      box-shadow: 0 4px 10px rgba(255, 140, 0, 0.4);
+    }
+    100% {
+      box-shadow: 0 4px 20px rgba(255, 215, 0, 0.8);
+    }
+  }
+  
+  @keyframes marquee {
+    0% {
+      transform: translateX(100%);
+    }
+    100% {
+      transform: translateX(-100%);
+    }
+  }
+  
+  @keyframes bannerGlow {
+    0% {
+      box-shadow: 0 4px 10px rgba(255, 215, 0, 0.3);
+    }
+    100% {
+      box-shadow: 0 4px 20px rgba(255, 215, 0, 0.7);
+    }
+  }
+  
+  /* General Styles */
+  .top-nav {
+    padding: 10px 20px;
+    background-color: #021a02;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    border-bottom: 2px solid #0056b3;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    position: relative; 
+  }
+  
+  /* User Info Section */
+  .user-info {
+    display: flex;
+    align-items: center;
+    gap: 15px; 
+    flex-wrap: wrap; 
+  }
+  
+  .user-info span {
+    font-weight: bold;
+    font-size: 1em;
+    color: #ffcc00;
+  }
+  
+  /* Logout Link */
+  .logout {
+    position: absolute; 
+    top: 10px; 
+    right: 20px; 
+    color: white; 
+    text-decoration: none; 
+    font-size: 0.9em; 
+    font-weight: bold;
+    transition: color 0.3s ease, background-color 0.3s ease;
+  }
+  .landing-page {
+    color: white; 
+    text-decoration: none; 
+    font-size: 0.9em; 
+    font-weight: bold;
+    transition: color 0.3s ease, background-color 0.3s ease;
+  }
+  
+  .logout:hover {
+    color: #ffcc00; 
+    text-decoration: underline;
+  }
+  
+  /* Button Styles */
+  .user-info button {
+    padding: 10px 15px;
+    border: none;
+    background-color: #2c5a04;
+    color: white;
+    border-radius: 5px;
+    font-size: 0.7em;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  }
+  
+  .user-info button:hover {
+    background-color: #0056b3;
+    transform: scale(1.05);
+  }
+  
+  /* Dropdown Styles */
+  .dropdown {
+    position: relative;
+  }
+  
+  .dropdown-menu {
+    display: none;
+    position: absolute;
+    top: calc(100% + 5px);
+    left: 0;
+    background-color: white;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    z-index: 10;
+    border-radius: 5px;
+    overflow: hidden;
+  }
+  
+  .dropdown-menu a {
+    display: block;
+    padding: 10px 15px;
+    text-decoration: none;
+    color: black;
+    font-size: 0.9em;
+    border-bottom: 1px solid #ddd;
+  }
+  
+  .dropdown-menu a:last-child {
+    border-bottom: none;
+  }
+  
+  .dropdown-menu a:hover {
+    background-color: #f1f1f1;
+  }
+  
+  .dropdown:hover .dropdown-menu {
+    display: block;
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .user-info {
+      justify-content: center;
+      text-align: center;
+    }
+  
+    .user-info button,
+    .user-info span {
+      flex: 1 0 auto;
+    }
+  
+    .logout {
+      position: static;
+      margin-top: 10px;
+      text-align: right;
+      width: 100%; 
+    }
+  
+    .dropdown-menu {
+      position: static;
+      box-shadow: none;
+      background-color: #001a33;
+    }
+  
+    .dropdown-menu a {
+      color: white;
+      border-bottom: 1px solid #0056b3;
+    }
+  
+    .dropdown-menu a:hover {
+      background-color: #0056b3;
+    }
+  }
+  
+  /* Style for the profile modal */
+  .modal {
+    display: none; 
+    position: fixed; 
+    z-index: 1; 
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto; 
+    background-color: rgba(0, 0, 0, 0.5); 
+  }
+  
+  /* Modal content */
+  .modal-content {
+    background-color: #fefefe;
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 50%;
+    position: relative;
+    color: #0033ff;
+    font-size: 1em;
+  }
+  
+  /* Close button */
+  .close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 50px;
+    font-weight: bold;
+    color: #aaa;
+    cursor: pointer;
+  }
+  
+  .close-btn:hover,
+  .close-btn:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  
+  /* Form styling */
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  
+  input[type="text"], input[type="email"] {
+    padding: 8px;
+    margin: 5px 0;
+    font-size: 0.8em;
+  }
+  
+  button {
+    padding: 10px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    cursor: pointer;
+  }
+  
+  button:hover {
+    background-color: #45a049;
+  }
+  
+  .info {
+    display: flex;
+  }
+  
+  .jackpot-box {
+    position: relative;
+    border: #74e3f5;
+    border-style: double;
+    background-color: #225910;
+    border-radius: 10px;
+    width: 90vw;
+    max-width: 450px;
+    min-width: 450px;
+    margin: 2px auto;
+    padding: 5px;
+    height: 20dvh;
+    max-height: 171px;
+    min-height: 171px;
+    gap: 1px;
+  }
+  
+  .jackpot-row-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+    border-radius: 10px;
+  }
+  
+  .plate {
+    width: 100%;
+    display: flex;
+    border-radius: 10px;
+    height: 40px;
+    margin: auto;
+  }
+  
+  .card-box {
+    display: flex;
+    width: 130px;
+    justify-content: flex-start;
+    background-color: #4d004d;
+    border-radius: 10px;
+    height: 40px;
+    margin: auto;
+  }
+  
+  .card-image {
+    width: 38px;
+    height:38px;
+    border-radius: 5px;
+    margin: auto;
+  
+  }
+  
+  .jackpot-message {
+    width: 330px;
+    height: 38px;
+    display: flex;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    color: #0c0101;
+    font-size: 8px;
+    align-items: center;
+    background-color: rgb(239, 236, 220);
+    padding: 2px;
+    border-radius: 5px;
+    font-weight: 100;
+  }
+  
+  .bounty-box {
+    position: relative;
+    border: #74e3f5;
+    border-style: double;
+    background-color: #225910;
+    border-radius: 10px;
+    width: 90vw;
+    max-width: 450px;
+    margin: 2px auto;
+    padding: 5px;
+    height: 20dvh;
+    max-height: 85px;
+    min-height: 85px;
+    gap: 1px;
+  }
+  
+  .bounty-row-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    margin-bottom: 30px;
+    border-radius: 10px;
+  }
+  
+  .bounty-plate {
+    width: 100%;
+    display: flex;
+    border-radius: 10px;
+    height: 70px;
+    margin: auto;
+  }
+  
+  .bounty-card-box {
+    display: flex;
+    width: auto;
+    justify-content: flex-start;
+    background-color: #4d004d;
+    border-radius: 10px;
+    height: 70px;
+    margin: 0;
+  }
+  
+  .bounty-card-image {
+    width: 70px;
+    height:70px;
+    border-radius: 5px;
+    margin: 0 2px;
+  }
+  
+  .bounty-jackpot-message {
+    width: 2000px;
+    height: 70px;
+    display: flex;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    color: #0c0101;
+    font-size: 14px;
+    align-items: center;
+    background-color: rgb(239, 236, 220);
+    padding: 10px;
+    border-radius: 5px;
+    font-weight: 100;
+    animation: blink 1s step-start infinite, glow 1.5s ease-in-out infinite;
+  }
+  
+  @keyframes glow {
+    0% {
+      text-shadow: 0 0 5px #ff6600, 0 0 10px #ff6600, 0 0 15px #ff6600, 0 0 20px #ff6600;
+    }
+    100% {
+      text-shadow: 0 0 10px #ff6600, 0 0 20px #ff6600, 0 0 30px #ff6600, 0 0 40px #ff6600;
+    }
+  }
+  
+  @keyframes blink {
+    50% {
+      opacity: 50%;
+    }
+  }
