@@ -17,7 +17,7 @@ body {
 .logo {
   display: inline-block;
   width: 100%;
-  font-size: 0.7em; 
+  font-size: 0.5em; 
   font-weight: bold;
   color: #ffcc00; 
   background: linear-gradient(90deg, #007bff, #0056b3); 
@@ -38,7 +38,6 @@ body {
   box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
 }
 
-
 .main-container {
   position: relative;
   display: flex;
@@ -50,9 +49,9 @@ body {
   width: 90vw;
   max-width: 450px;
   margin: 20px auto;
-  padding: 20px;
-  height: 50vh;
-  max-height: 500px;
+  padding: 5px;
+  height: 50dvh;
+  max-height: 300px;
   box-shadow: 0 4px 20px rgba(255, 0, 102, 0.6);
 }
 
@@ -62,13 +61,13 @@ body {
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  margin-bottom: 20px;
+  margin-bottom: 3px;
 }
 
 /* Account Balance */
 .account-balance {
-  font-size: 1.2em;
-  padding: 10px 15px;
+  font-size: 0.8em;
+  padding: 5px;
   border: 3px solid #ffff00;
   border-radius: 10px;
   background: linear-gradient(to right, #0033ff, #ff6600);
@@ -92,7 +91,7 @@ body {
   align-items: center;
   background: linear-gradient(145deg, #ff6600, #ff0033);
   border-radius: 20px;
-  padding: 15px;
+  padding: 5px;
   box-shadow: 0 4px 15px rgba(255, 102, 0, 0.6);
 }
 
@@ -103,7 +102,7 @@ body {
   background: #df73eb;
   border: 2px solid #13a02b;
   color: #000000;
-  font-size: 1em;
+  font-size: 0.7em;
   cursor: pointer;
   transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
 }
@@ -125,19 +124,19 @@ body {
 /* Slot box */
 .slot-outer-box {
   width: 100%;
-  height: 50%;
-  background: linear-gradient(145deg, #4d004d, #660066);
+  height: 45%;
+  background: linear-gradient(145deg, #1ad48d, #035f3c);
   display: flex;
   justify-content: center;
   align-items: center;
   border-radius: 20px;
   box-shadow: 0 4px 20px rgba(255, 0, 255, 0.6);
-  margin-bottom: 20px;
+  margin: 5px;
 }
 
 .slot-mid-box {
-  width: 97%;
-  height: 97%;
+  width: 98%;
+  height: 98%;
   background: linear-gradient(145deg, #660099, #4d004d);
   border-radius: 20px;
   display: flex;
@@ -146,9 +145,9 @@ body {
 }
 
 .slot-inner-box {
-  width: 94%;
-  height: 94%;
-  background: #1c1c1c;
+  width: 96%;
+  height: 96%;
+  background: #a72c14;
   border-radius: 20px;
   display: flex;
   justify-content: space-between;
@@ -157,7 +156,7 @@ body {
 
 .slot-display {
   display: flex;
-  gap: 5px;
+  gap: 2px;
   justify-content: space-between;
   height: 100%;
   width: 100%;
@@ -252,10 +251,10 @@ body {
 }
 
 .card img {
-  width: 13dvw;
-  height: 90%;
+  width: 14dvw;
+  height: 99%;
   border-radius: 5px;
-  border: 2px solid white;
+  border: 0.5px solid white;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), inset 0 0 10px rgba(255, 255, 255, 0.5);
 }
 
@@ -370,7 +369,7 @@ body {
 
 .top-nav {
   padding: 10px 20px;
-  background-color: #001a33;
+  background-color: #021a02;
   color: white;
   display: flex;
   align-items: center;
@@ -389,17 +388,17 @@ body {
 
 .user-info span {
   font-weight: bold;
-  font-size: 1.2em;
+  font-size: 1em;
   color: #ffcc00;
 }
 
 .user-info button {
   padding: 10px 15px;
   border: none;
-  background-color: #007bff; /* Primary blue */
+  background-color: #2c5a04;
   color: white;
   border-radius: 5px;
-  font-size: 1em;
+  font-size: 0.7em;
   cursor: pointer;
   transition: background-color 0.3s ease, transform 0.2s ease;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
