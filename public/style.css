@@ -52,9 +52,9 @@ body {
   margin: 5px auto;
   padding: 5px;
   height: 50dvh;
-  max-height: 300px;
+  max-height: 280px;
   box-shadow: 0 4px 20px rgba(255, 0, 102, 0.6);
-  min-height: 300px;
+  min-height: 280px;
 }
 
 /* Top Panel: Account Balance + Bet Selection */
@@ -102,8 +102,8 @@ body {
   height: 59px;
   max-width: 59px;
   max-height: 59px;
-  min-width: 39px;
-  min-height: 39px;
+  min-width: 49px;
+  min-height: 49px;
   margin: auto;
   border-radius: 50%;
   background: #df73eb;
