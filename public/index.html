@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login</title>
   <link rel="stylesheet" href="styles.css">
+  <script type="module" src="https://js-de.sentry-cdn.com/efcedd90866cd0c12c2144245e25eca9.min.js"
+  crossorigin="anonymous"
+></script>
 </head>
 <body>
   <div class="container">
@@ -18,13 +21,14 @@
       
       <button type="submit">Log In</button>
     </form>
-    <p>Don't have an account? <a href="signup.html">Sign up here</a>.</p>
+    <p id="signupText">Don't have an account? <a href="signup.html">Sign up here</a>.</p> <!-- Added id for this paragraph -->
     <p id="statusMessage"></p> <!-- This will display any error or success messages -->
   </div>
 
   <script>
     const loginForm = document.getElementById('loginForm');
     const statusMessage = document.getElementById('statusMessage'); // For status messages
+    const signupText = document.getElementById('signupText'); // Reference to the "Don't have an account" text
 
     loginForm.addEventListener('submit', (e) => {
       e.preventDefault();
@@ -47,21 +51,24 @@
             localStorage.setItem('token', data.token);
 
             // Display success message
-            statusMessage.textContent = 'Login successful! Redirecting...';
+            statusMessage.textContent = 'Login successful...';
             statusMessage.style.color = 'green';
+
+            // Hide the "Don't have an account" text
+            signupText.style.display = 'none';
 
             // Redirect after a brief moment
             setTimeout(() => {
               window.location.href = 'landing-page.html'; // Redirect to the main page
-            }, 1000); // Delay redirect by 1 second for better UX
+            }, 2000); // Delay redirect by 1 second for better UX
           } else {
-            // If no token, it means login failed
+            // If no token
             statusMessage.textContent = 'Invalid username, email, or phone number.';
             statusMessage.style.color = 'red';
           }
         })
         .catch((error) => {
-          console.error('Error logging in:', error);
+          Sentry.captureException(new Error('Error logging in:', error));
           statusMessage.textContent = 'An error occurred. Please try again later.';
           statusMessage.style.color = 'red';
         });
