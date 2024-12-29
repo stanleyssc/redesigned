@@ -238,7 +238,7 @@ body {
   width: 15dvw;
   height: 100%;
   max-width: 90px;
-  min-width: 72px;
+  min-width: 78px;
   overflow: hidden;
   background: #74e3f5;
   position: relative;
@@ -256,7 +256,7 @@ body {
   width: 15dvw;
   height: 100%;
   max-width: 90px;
-  min-width: 72px;
+  min-width: 78px;
   max-height: 125px;
   min-height: 125px;
 }
@@ -270,7 +270,7 @@ body {
   align-items: center;
   margin-bottom: 5px;
   max-width: 90px;
-  min-width: 72px;
+  min-width: 78px;
   max-height: 125px;
   min-height: 125px;
 }
@@ -284,7 +284,7 @@ body {
   align-items: center;
   margin-bottom: 5px;
   max-width: 90px;
-  min-width: 72px;
+  min-width: 78px;
   max-height: 120px;
   min-height: 120px;
 }
@@ -296,7 +296,7 @@ body {
   border: 0.5px solid white;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), inset 0 0 10px rgba(255, 255, 255, 0.5);
   max-width: 90px;
-  min-width: 72px;
+  min-width: 78px;
   max-height: 120px;
   min-height: 120px;
 }
