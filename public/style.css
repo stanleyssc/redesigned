@@ -68,8 +68,8 @@ body {
 
 /* Account Balance */
 .account-balance {
-  font-size: 0.8em;
-  padding: 5px;
+  font-size: 0.6em;
+  padding: 3px;
   border: 3px solid #ffff00;
   border-radius: 10px;
   background: linear-gradient(to right, #0033ff, #ff6600);
@@ -109,7 +109,7 @@ body {
   background: #df73eb;
   border: 2px solid #13a02b;
   color: #000000;
-  font-size: 0.6rem;
+  font-size: 0.5rem;
   cursor: pointer;
   transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
 }
