@@ -385,23 +385,99 @@ app.put('/update-profile', authenticate, (req, res) => {
   });
 });
 
-//Bounty prize
+const express = require('express');
+const mysql = require('mysql');
+const jwt = require('jsonwebtoken');
+const cors = require('cors');
+const { body, validationResult } = require('express-validator');
+const bcrypt = require('bcrypt');
+const cron = require('node-cron');
+require('dotenv').config();
+
+// Initialize express
+const app = express();
+app.use(express.json());
+
+// Initialize Redis client
 const redis = require('redis');
-const redisClient = redis.createClient({ host: process.env.REDIS_HOST, port: process.env.REDIS_PORT });
+const redisClient = redis.createClient({
+  host: process.env.REDIS_HOST,
+  port: process.env.REDIS_PORT,
+  password: process.env.REDIS_PASSWORD,  // For Redis with password authentication
+  retry_strategy: (options) => {
+    if (options.error && options.error.code === 'ECONNREFUSED') {
+      console.error('Redis connection refused. Retrying...');
+      return new Error('The server refused the connection');
+    }
+    if (options.total_retry_time > 1000 * 60 * 60) {
+      console.error('Retry time exhausted');
+      return new Error('Retry time exhausted');
+    }
+    if (options.attempt > 10) {
+      console.error('Too many attempts to connect to Redis');
+      return undefined;
+    }
+    return Math.min(options.attempt * 100, 3000);
+  },
+  connect_timeout: 10000, // Connection timeout in milliseconds
+});
 
+// Event listeners for Redis connection
+redisClient.on('connect', () => {
+  console.log('Connected to Redis');
+});
+
+redisClient.on('ready', () => {
+  console.log('Redis client is ready');
+});
+
+redisClient.on('error', (err) => {
+  console.error('Redis client error:', err);
+});
+
+// Graceful shutdown of Redis
+process.on('SIGINT', async () => {
+  console.log('Gracefully shutting down Redis client');
+  await redisClient.quit();
+  process.exit();
+});
+
+// Cache functions
 const getCachedBountyPrize = async () => {
-  return new Promise((resolve, reject) => {
-    redisClient.get('bountyPrize', (err, data) => {
-      if (err) reject(err);
-      resolve(data ? JSON.parse(data) : null);
+  try {
+    // Ensure the Redis client is connected
+    if (!redisClient.isOpen) {
+      await redisClient.connect();
+    }
+    return new Promise((resolve, reject) => {
+      redisClient.get('bountyPrize', (err, data) => {
+        if (err) return reject(err);
+        resolve(data ? JSON.parse(data) : null);
+      });
     });
-  });
+  } catch (error) {
+    console.error('Error fetching cached bounty prize:', error);
+    throw error;
+  }
 };
 
-const cacheBountyPrize = (prize) => {
-  redisClient.setex('bountyPrize', 180, JSON.stringify(prize));
+const cacheBountyPrize = async (prize) => {
+  try {
+    // Ensure Redis client is connected
+    if (!redisClient.isOpen) {
+      await redisClient.connect();
+    }
+    redisClient.setex('bountyPrize', 180, JSON.stringify(prize), (err) => {
+      if (err) {
+        console.error('Error caching bounty prize:', err);
+      }
+    });
+  } catch (error) {
+    console.error('Error caching bounty prize:', error);
+  }
 };
 
+// Bounty prize route
 app.get('/bounty-jackpot', async (req, res) => {
   try {
     const panelType = req.query.panelType;
@@ -409,11 +485,13 @@ app.get('/bounty-jackpot', async (req, res) => {
       return res.status(400).json({ error: 'Invalid panel type. Please use "3" or "4".' });
     }
 
+    // Check Redis cache for the bounty prize
     const cachedPrize = await getCachedBountyPrize();
     if (cachedPrize) {
       return res.status(200).json({ bountyPrize: cachedPrize });
     }
 
+    // If no cached prize, calculate it from the database
     const BASE_PRIZE = 1000;
     const PERCENTAGE = 0.01;
     const FOUR_PANEL_MULTIPLIER = 0.8;
@@ -457,6 +535,7 @@ app.get('/bounty-jackpot', async (req, res) => {
           adjustedPrize = prizeForThreePanels;
         }
 
+        // Cache the prize before responding
         cacheBountyPrize(adjustedPrize);
 
         res.status(200).json({ bountyPrize: adjustedPrize });
