@@ -540,9 +540,11 @@ app.get('/bounty-jackpot', async (req, res) => {
   }
 });
 
-// Schedule the job to run every day at midnight
+// Superuser Referral Bonus Calculation
+const bonusPercentage = 0.5 / 100;  // Set to 0.5% but can be adjusted later
+
 cron.schedule('0 0 * * *', async () => {
-  console.log('Running scheduled task: Calculating referral bets');
+  console.log('Running scheduled task: Calculating referral bets and bonuses');
 
   try {
     const query = `
@@ -562,12 +564,16 @@ cron.schedule('0 0 * * *', async () => {
 
       console.log('Referral bet totals:', results);
 
-      // Store the results in Redis or another temporary store for the frontend
+      // Calculate referral bonus for each superuser
       results.forEach(result => {
         const { superuser_code, total_bet } = result;
 
-        // Save each superuser's total bet in cache or database for quick retrieval
-        cache.set(`superuser:${superuser_code}:total_bet`, total_bet); // Example with Redis
+        // Calculate the referral bonus (total bet * bonus percentage)
+        const referralBonus = total_bet * bonusPercentage;
+
+        // Store the results (total bet and referral bonus) in the cache
+        cache.set(`superuser:${superuser_code}:total_bet`, total_bet);
+        cache.set(`superuser:${superuser_code}:referral_bonus`, referralBonus); // Store referral bonus
       });
     });
   } catch (error) {
@@ -575,24 +581,24 @@ cron.schedule('0 0 * * *', async () => {
   }
 });
 
-app.get('/superuser/total-bet', async (req, res) => {
-  const { superuser_code } = req.query; // Pass the logged-in superuser's code
+// Endpoint to fetch superuser's referral bonus
+app.get('/superuser/referral-bonus', async (req, res) => {
+  const { superuser_code } = req.query; // Get the superuser code from query parameter
 
   try {
-    const totalBet = await cache.get(`superuser:${superuser_code}:total_bet`); // Retrieve from cache
+    // Retrieve referral bonus from cache
+    const referralBonus = await cache.get(`superuser:${superuser_code}:referral_bonus`);
 
-    if (totalBet) {
-      res.json({ success: true, totalBet });
+    if (referralBonus) {
+      res.json({ success: true, referralBonus });
     } else {
       res.json({ success: false, message: 'No data found for this superuser' });
     }
   } catch (error) {
-    console.error('Error fetching total bet for superuser:', error);
+    console.error('Error fetching referral bonus for superuser:', error);
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
-
-
 
 const PORT = process.env.PORT || 3000;
 
