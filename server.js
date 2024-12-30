@@ -397,21 +397,6 @@ const redis = require('redis');
 const redisUrl = process.env.REDIS_URL || 'redis://red-ctpeidjqf0us73ebbcp0:6379'; // Use your Redis URL
 const redisClient = redis.createClient({
   url: redisUrl,
-  retry_strategy: (options) => {
-    if (options.error && options.error.code === 'ECONNREFUSED') {
-      console.error('Redis connection refused. Retrying...');
-      return new Error('The server refused the connection');
-    }
-    if (options.total_retry_time > 1000 * 60 * 60) {
-      console.error('Retry time exhausted');
-      return new Error('Retry time exhausted');
-    }
-    if (options.attempt > 10) {
-      console.error('Too many attempts to connect to Redis');
-      return undefined;
-    }
-    return Math.min(options.attempt * 100, 3000);
-  },
 });
 
 // Event listeners for Redis connection
@@ -434,19 +419,21 @@ process.on('SIGINT', async () => {
   process.exit();
 });
 
+// Connect to Redis
+(async () => {
+  try {
+    await redisClient.connect();
+    console.log('Redis connection established');
+  } catch (error) {
+    console.error('Error connecting to Redis:', error);
+  }
+})();
+
 // Cache functions
 const getCachedBountyPrize = async () => {
   try {
-    // Ensure the Redis client is connected
-    if (!redisClient.isOpen) {
-      await redisClient.connect();
-    }
-    return new Promise((resolve, reject) => {
-      redisClient.get('bountyPrize', (err, data) => {
-        if (err) return reject(err);
-        resolve(data ? JSON.parse(data) : null);
-      });
-    });
+    const data = await redisClient.get('bountyPrize');
+    return data ? JSON.parse(data) : null;
   } catch (error) {
     console.error('Error fetching cached bounty prize:', error);
     throw error;
@@ -455,15 +442,8 @@ const getCachedBountyPrize = async () => {
 
 const cacheBountyPrize = async (prize) => {
   try {
-    // Ensure Redis client is connected
-    if (!redisClient.isOpen) {
-      await redisClient.connect();
-    }
-    redisClient.setex('bountyPrize', 180, JSON.stringify(prize), (err) => {
-      if (err) {
-        console.error('Error caching bounty prize:', err);
-      }
-    });
+    await redisClient.setEx('bountyPrize', 180, JSON.stringify(prize)); // Updated to `setEx` method
+    console.log('Bounty prize cached successfully');
   } catch (error) {
     console.error('Error caching bounty prize:', error);
   }
