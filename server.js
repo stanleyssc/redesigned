@@ -391,12 +391,12 @@ app.put('/update-profile', authenticate, (req, res) => {
   });
 });
 
-// Initialize Redis client
 const redis = require('redis');
+
+// Extract credentials and host information from the Redis URL
+const redisUrl = process.env.REDIS_URL || 'redis://red-ctpeidjqf0us73ebbcp0:6379'; // Use your Redis URL
 const redisClient = redis.createClient({
-  host: process.env.REDIS_HOST,
-  port: process.env.REDIS_PORT,
-  password: process.env.REDIS_PASSWORD,  // For Redis with password authentication
+  url: redisUrl,
   retry_strategy: (options) => {
     if (options.error && options.error.code === 'ECONNREFUSED') {
       console.error('Redis connection refused. Retrying...');
@@ -412,7 +412,6 @@ const redisClient = redis.createClient({
     }
     return Math.min(options.attempt * 100, 3000);
   },
-  connect_timeout: 10000, // Connection timeout in milliseconds
 });
 
 // Event listeners for Redis connection
