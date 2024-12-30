@@ -85,7 +85,7 @@ app.post('/register', async (req, res) => {
     let referrerId = null;
     if (referrerCode) {
       const [referrerResult] = await db.promise().query(
-        'SELECT user_id FROM users WHERE superuser_code = ?',
+        'SELECT user_id FROM users WHERE superuserCode = ?',
         [referrerCode]
       );
 
@@ -107,7 +107,7 @@ app.post('/register', async (req, res) => {
     // Log the referral if referrerCode is provided
     if (referrerId) {
       await db.promise().query(
-        'INSERT INTO user_referrals (superuser_code, user_id) VALUES (?, ?)',
+        'INSERT INTO user_referrals (superuserCode, user_id) VALUES (?, ?)',
         [referrerCode, newUserId]
       );
     }
@@ -527,12 +527,12 @@ cron.schedule('0 0 * * *', async () => {
 
   try {
     const query = `
-      SELECT ur.superuser_code, SUM(b.amount_bet) AS total_bet
+      SELECT ur.superuserCode, SUM(b.amount_bet) AS total_bet
       FROM users u
       JOIN games_outcomes b ON u.user_id = b.user_id
       JOIN user_referrals ur ON ur.user_id = u.user_id
-      WHERE ur.superuser_code IS NOT NULL
-      GROUP BY ur.superuser_code
+      WHERE ur.superuserCode IS NOT NULL
+      GROUP BY ur.superuserCode
     `;
 
     db.query(query, (err, results) => {
