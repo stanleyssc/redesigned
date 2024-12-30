@@ -14,7 +14,7 @@ app.use(express.json());
 app.get('/', (req, res) => {
   res.status(200).json({
     status: 'success',
-    message: 'Server is live and running!l',
+    message: 'Server is live and running!m',
   });
 });
 
@@ -99,10 +99,10 @@ app.post('/register', (req, res) => {
 
           referrerId = referrerResult[0].user_id; // Extract referrer user_id
 
-          // Register the user
+          // Register the user with null isSuperuser
           db.query(
-            'INSERT INTO users (username, password, balance, email, phone_number) VALUES (?, ?, ?, ?, ?)',
-            [username, hashedPassword, 1000, email, phone_number],
+            'INSERT INTO users (username, password, balance, email, phone_number, isSuperuser) VALUES (?, ?, ?, ?, ?, ?)',
+            [username, hashedPassword, 1000, email, phone_number, null],
             (err, insertResult) => {
               if (err) {
                 if (err.code === 'ER_DUP_ENTRY') {
@@ -135,10 +135,10 @@ app.post('/register', (req, res) => {
         }
       );
     } else {
-      // Register the user without referral code
+      // Register the user without referral code, set isSuperuser to null by default
       db.query(
-        'INSERT INTO users (username, password, balance, email, phone_number) VALUES (?, ?, ?, ?, ?)',
-        [username, hashedPassword, 1000, email, phone_number],
+        'INSERT INTO users (username, password, balance, email, phone_number, isSuperuser) VALUES (?, ?, ?, ?, ?, ?)',
+        [username, hashedPassword, 1000, email, phone_number, null],
         (err, insertResult) => {
           if (err) {
             if (err.code === 'ER_DUP_ENTRY') {
