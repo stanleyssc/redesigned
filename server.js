@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const { body, validationResult } = require('express-validator');
 const bcrypt = require('bcrypt');
+const cron = require('node-cron');
 require('dotenv').config();
 
 const app = express();
@@ -13,7 +14,7 @@ app.use(express.json());
 app.get('/', (req, res) => {
   res.status(200).json({
     status: 'success',
-    message: 'Server is live and running!i',
+    message: 'Server is live and running!j',
   });
 });
 
@@ -466,6 +467,60 @@ app.get('/bounty-jackpot', async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+
+// Schedule the job to run every day at midnight
+cron.schedule('0 0 * * *', async () => {
+  console.log('Running scheduled task: Calculating referral bets');
+
+  try {
+    const query = `
+      SELECT ur.superuser_code, SUM(b.amount_bet) AS total_bet
+      FROM users u
+      JOIN games_outcomes b ON u.user_id = b.user_id
+      JOIN user_referrals ur ON ur.user_id = u.user_id
+      WHERE ur.superuser_code IS NOT NULL
+      GROUP BY ur.superuser_code
+    `;
+
+    db.query(query, (err, results) => {
+      if (err) {
+        console.error('Error calculating referral bets:', err);
+        return;
+      }
+
+      console.log('Referral bet totals:', results);
+
+      // Store the results in Redis or another temporary store for the frontend
+      results.forEach(result => {
+        const { superuser_code, total_bet } = result;
+
+        // Save each superuser's total bet in cache or database for quick retrieval
+        cache.set(`superuser:${superuser_code}:total_bet`, total_bet); // Example with Redis
+      });
+    });
+  } catch (error) {
+    console.error('Error during scheduled referral calculation:', error);
+  }
+});
+
+app.get('/superuser/total-bet', async (req, res) => {
+  const { superuser_code } = req.query; // Pass the logged-in superuser's code
+
+  try {
+    const totalBet = await cache.get(`superuser:${superuser_code}:total_bet`); // Retrieve from cache
+
+    if (totalBet) {
+      res.json({ success: true, totalBet });
+    } else {
+      res.json({ success: false, message: 'No data found for this superuser' });
+    }
+  } catch (error) {
+    console.error('Error fetching total bet for superuser:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+
 
 const PORT = process.env.PORT || 3000;
 
