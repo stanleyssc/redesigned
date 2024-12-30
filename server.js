@@ -14,7 +14,7 @@ app.use(express.json());
 app.get('/', (req, res) => {
   res.status(200).json({
     status: 'success',
-    message: 'Server is live and running!k',
+    message: 'Server is live and running!l',
   });
 });
 
@@ -68,8 +68,7 @@ const generateToken = (userId) => {
   );
 };
 
-// Register endpoint
-app.post('/register', async (req, res) => {
+app.post('/register', (req, res) => {
   const { username, password, email, phone_number, referrerCode } = req.body;
 
   if (!username || !password || (!email && !phone_number)) {
@@ -78,52 +77,87 @@ app.post('/register', async (req, res) => {
     });
   }
 
-  try {
-    const hashedPassword = await bcrypt.hash(password, 10);
+  bcrypt.hash(password, 10, (err, hashedPassword) => {
+    if (err) {
+      return res.status(500).json({ error: 'Error hashing password' });
+    }
 
     // Check if referrer code is provided and valid
     let referrerId = null;
     if (referrerCode) {
-      const [referrerResult] = await db.promise().query(
+      db.query(
         'SELECT user_id FROM users WHERE superuserCode = ?',
-        [referrerCode]
+        [referrerCode],
+        (err, referrerResult) => {
+          if (err) {
+            return res.status(500).json({ error: 'Error checking referral code' });
+          }
+
+          if (referrerResult.length === 0) {
+            return res.status(400).json({ error: 'Invalid referral code' });
+          }
+
+          referrerId = referrerResult[0].user_id; // Extract referrer user_id
+
+          // Register the user
+          db.query(
+            'INSERT INTO users (username, password, balance, email, phone_number) VALUES (?, ?, ?, ?, ?)',
+            [username, hashedPassword, 1000, email, phone_number],
+            (err, insertResult) => {
+              if (err) {
+                if (err.code === 'ER_DUP_ENTRY') {
+                  return res.status(400).json({
+                    error: 'Username, email, or phone number already exists',
+                  });
+                }
+                return res.status(500).json({ error: 'Internal server error' });
+              }
+
+              const newUserId = insertResult.insertId;
+
+              // Log the referral if referrerCode is provided
+              if (referrerId) {
+                db.query(
+                  'INSERT INTO user_referrals (superuserCode, user_id) VALUES (?, ?)',
+                  [referrerCode, newUserId],
+                  (err) => {
+                    if (err) {
+                      console.error('Error logging referral:', err);
+                    }
+                  }
+                );
+              }
+
+              const token = generateToken(newUserId);
+              res.status(201).json({ message: 'User registered successfully', token });
+            }
+          );
+        }
       );
+    } else {
+      // Register the user without referral code
+      db.query(
+        'INSERT INTO users (username, password, balance, email, phone_number) VALUES (?, ?, ?, ?, ?)',
+        [username, hashedPassword, 1000, email, phone_number],
+        (err, insertResult) => {
+          if (err) {
+            if (err.code === 'ER_DUP_ENTRY') {
+              return res.status(400).json({
+                error: 'Username, email, or phone number already exists',
+              });
+            }
+            return res.status(500).json({ error: 'Internal server error' });
+          }
 
-      if (referrerResult.length === 0) {
-        return res.status(400).json({ error: 'Invalid referral code' });
-      }
-
-      referrerId = referrerResult[0].user_id; // Extract referrer user_id
-    }
-
-    // Register the user
-    const [insertResult] = await db.promise().query(
-      'INSERT INTO users (username, password, balance, email, phone_number) VALUES (?, ?, ?, ?, ?)',
-      [username, hashedPassword, 1000, email, phone_number]
-    );
-
-    const newUserId = insertResult.insertId;
-
-    // Log the referral if referrerCode is provided
-    if (referrerId) {
-      await db.promise().query(
-        'INSERT INTO user_referrals (superuserCode, user_id) VALUES (?, ?)',
-        [referrerCode, newUserId]
+          const newUserId = insertResult.insertId;
+          const token = generateToken(newUserId);
+          res.status(201).json({ message: 'User registered successfully', token });
+        }
       );
     }
-
-    const token = generateToken(newUserId);
-    res.status(201).json({ message: 'User registered successfully', token });
-  } catch (err) {
-    if (err.code === 'ER_DUP_ENTRY') {
-      return res.status(400).json({
-        error: 'Username, email, or phone number already exists',
-      });
-    }
-    console.error('Error during registration:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
+  });
 });
+
 
 //Login endpoint
 app.post('/login', (req, res) => {
