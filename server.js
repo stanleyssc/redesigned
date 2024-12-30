@@ -157,7 +157,13 @@ app.post('/login', (req, res) => {
       );
 
       const token = generateToken(user.user_id);
-      res.status(200).json({ token, username: user.username });
+      
+      res.status(200).json({
+        token,
+        username: user.username,
+        isSuperuser: user.isSuperuser, 
+        superuserCode: user.superuserCode,
+      });
     });
   });
 });
