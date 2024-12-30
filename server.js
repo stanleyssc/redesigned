@@ -385,19 +385,6 @@ app.put('/update-profile', authenticate, (req, res) => {
   });
 });
 
-const express = require('express');
-const mysql = require('mysql');
-const jwt = require('jsonwebtoken');
-const cors = require('cors');
-const { body, validationResult } = require('express-validator');
-const bcrypt = require('bcrypt');
-const cron = require('node-cron');
-require('dotenv').config();
-
-// Initialize express
-const app = express();
-app.use(express.json());
-
 // Initialize Redis client
 const redis = require('redis');
 const redisClient = redis.createClient({
