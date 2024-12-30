@@ -69,33 +69,57 @@ const generateToken = (userId) => {
 
 // Register endpoint
 app.post('/register', async (req, res) => {
-  const { username, password, email, phone_number } = req.body;
+  const { username, password, email, phone_number, referrerCode } = req.body;
 
   if (!username || !password || (!email && !phone_number)) {
-    return res.status(400).json({ error: 'Username, password, and either email or phone number are required' });
+    return res.status(400).json({
+      error: 'Username, password, and either email or phone number are required',
+    });
   }
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    db.query(
-      'INSERT INTO users (username, password, balance, email, phone_number) VALUES (?, ?, ?, ?, ?)',
-      [username, hashedPassword, 1000, email, phone_number],
-      (err, result) => {
-        if (err) {
-          if (err.code === 'ER_DUP_ENTRY') {
-            return res.status(400).json({ error: 'Username, email, or phone number already exists' });
-          }
-          console.error('Error registering user:', err);
-          return res.status(500).json({ error: 'Error registering user' });
-        }
+    // Check if referrer code is provided and valid
+    let referrerId = null;
+    if (referrerCode) {
+      const [referrerResult] = await db.promise().query(
+        'SELECT user_id FROM users WHERE superuser_code = ?',
+        [referrerCode]
+      );
 
-        const token = generateToken(result.insertId);
-        res.status(201).json({ message: 'User registered successfully', token });
+      if (referrerResult.length === 0) {
+        return res.status(400).json({ error: 'Invalid referral code' });
       }
+
+      referrerId = referrerResult[0].user_id; // Extract referrer user_id
+    }
+
+    // Register the user
+    const [insertResult] = await db.promise().query(
+      'INSERT INTO users (username, password, balance, email, phone_number) VALUES (?, ?, ?, ?, ?)',
+      [username, hashedPassword, 1000, email, phone_number]
     );
-  } catch (error) {
-    console.error('Error during registration:', error);
+
+    const newUserId = insertResult.insertId;
+
+    // Log the referral if referrerCode is provided
+    if (referrerId) {
+      await db.promise().query(
+        'INSERT INTO user_referrals (superuser_code, user_id) VALUES (?, ?)',
+        [referrerCode, newUserId]
+      );
+    }
+
+    const token = generateToken(newUserId);
+    res.status(201).json({ message: 'User registered successfully', token });
+  } catch (err) {
+    if (err.code === 'ER_DUP_ENTRY') {
+      return res.status(400).json({
+        error: 'Username, email, or phone number already exists',
+      });
+    }
+    console.error('Error during registration:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
