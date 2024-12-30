@@ -14,7 +14,7 @@ app.use(express.json());
 app.get('/', (req, res) => {
   res.status(200).json({
     status: 'success',
-    message: 'Server is live and running!m',
+    message: 'Server is live and running!n',
   });
 });
 
@@ -68,6 +68,7 @@ const generateToken = (userId) => {
   );
 };
 
+//Registration endpoint
 app.post('/register', (req, res) => {
   const { username, password, email, phone_number, referrerCode } = req.body;
 
@@ -99,10 +100,10 @@ app.post('/register', (req, res) => {
 
           referrerId = referrerResult[0].user_id; // Extract referrer user_id
 
-          // Register the user with null isSuperuser
+          // Register the user
           db.query(
-            'INSERT INTO users (username, password, balance, email, phone_number, isSuperuser) VALUES (?, ?, ?, ?, ?, ?)',
-            [username, hashedPassword, 1000, email, phone_number, null],
+            'INSERT INTO users (username, password, balance, email, phone_number) VALUES (?, ?, ?, ?, ?)',
+            [username, hashedPassword, 1000, email, phone_number],
             (err, insertResult) => {
               if (err) {
                 if (err.code === 'ER_DUP_ENTRY') {
@@ -135,10 +136,10 @@ app.post('/register', (req, res) => {
         }
       );
     } else {
-      // Register the user without referral code, set isSuperuser to null by default
+      // Register the user without referral code
       db.query(
-        'INSERT INTO users (username, password, balance, email, phone_number, isSuperuser) VALUES (?, ?, ?, ?, ?, ?)',
-        [username, hashedPassword, 1000, email, phone_number, null],
+        'INSERT INTO users (username, password, balance, email, phone_number) VALUES (?, ?, ?, ?, ?)',
+        [username, hashedPassword, 1000, email, phone_number],
         (err, insertResult) => {
           if (err) {
             if (err.code === 'ER_DUP_ENTRY') {
@@ -157,7 +158,6 @@ app.post('/register', (req, res) => {
     }
   });
 });
-
 
 //Login endpoint
 app.post('/login', (req, res) => {
@@ -283,7 +283,7 @@ app.get('/winners', (req, res) => {
 
 // Fetch user profile data
 app.get('/user-info', authenticate, (req, res) => {
-  const userId = req.user_id; // Assuming user_id is set after authentication
+  const userId = req.user_id; 
 
   db.query('SELECT * FROM users WHERE user_id = ?', [userId], (err, result) => {
     if (err) {
@@ -293,11 +293,11 @@ app.get('/user-info', authenticate, (req, res) => {
     if (result.length === 0) {
       return res.status(404).json({ error: 'User not found' });
     }
-
-    // Send the full user data, including user_id, username, email, phone_number, bank_name, etc.
+    
     const user = result[0];
     res.status(200).json({
       user_id: user.user_id,
+      referral_code: user.referral_code,
       username: user.username,
       email: user.email,
       phone_number: user.phone_number,
@@ -313,7 +313,6 @@ app.get('/user-info', authenticate, (req, res) => {
 app.post('/transaction', (req, res) => {
   const { adminSecret, userId, type, amount } = req.body;
 
-  // Ensure the request is authorized
   if (adminSecret !== process.env.ADMIN_SECRET) {
     return res.status(403).json({ error: 'Unauthorized access' });
   }
@@ -322,7 +321,6 @@ app.post('/transaction', (req, res) => {
     return res.status(400).json({ error: 'Invalid request data' });
   }
 
-  // Fetch the user's current balance
   db.query('SELECT balance FROM users WHERE user_id = ?', [userId], (err, result) => {
     if (err || result.length === 0) {
       console.error('Error fetching user balance:', err);
@@ -365,6 +363,7 @@ app.post('/transaction', (req, res) => {
   });
 });
 
+// Update user profile data
 app.put('/update-profile', authenticate, (req, res) => {
   const { username, email, phone_number, bank_name, bank_account_number, account_name } = req.body;
 
@@ -406,7 +405,6 @@ app.put('/update-profile', authenticate, (req, res) => {
     return res.status(400).json({ error: 'At least one field must be provided' });
   }
 
-  // Create the update query string
   let updateQuery = `UPDATE users SET ${updateFields.join(', ')} WHERE user_id = ?`;
   values.push(req.user_id);
 
@@ -421,9 +419,28 @@ app.put('/update-profile', authenticate, (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    res.status(200).json({ message: 'Profile updated successfully' });
+    db.query('SELECT user_id, referral_code, username, email, phone_number, bank_name, bank_account_number, account_name FROM users WHERE user_id = ?', [req.user_id], (err, result) => {
+      if (err) {
+        console.error('Error fetching updated user data:', err);
+        return res.status(500).json({ error: 'Error fetching updated user data' });
+      }
+
+      const updatedUser = result[0];
+      res.status(200).json({
+        message: 'Profile updated successfully',
+        user_id: updatedUser.user_id,
+        referral_code: updatedUser.referral_code,
+        username: updatedUser.username,
+        email: updatedUser.email,
+        phone_number: updatedUser.phone_number,
+        bank_name: updatedUser.bank_name,
+        bank_account_number: updatedUser.bank_account_number,
+        account_name: updatedUser.account_name,
+      });
+    });
   });
 });
+
 
 const redis = require('redis');
 
@@ -553,20 +570,20 @@ app.get('/bounty-jackpot', async (req, res) => {
   }
 });
 
-// Superuser Referral Bonus Calculation
 const bonusPercentage = 0.5 / 100;  // Set to 0.5% but can be adjusted later
 
 cron.schedule('0 0 * * *', async () => {
   console.log('Running scheduled task: Calculating referral bets and bonuses');
 
   try {
+    // Query to fetch total bets grouped by referral_code
     const query = `
-      SELECT ur.superuserCode, SUM(b.amount_bet) AS total_bet
+      SELECT ur.referral_code, SUM(b.amount_bet) AS total_bet
       FROM users u
       JOIN games_outcomes b ON u.user_id = b.user_id
       JOIN user_referrals ur ON ur.user_id = u.user_id
-      WHERE ur.superuserCode IS NOT NULL
-      GROUP BY ur.superuserCode
+      WHERE ur.referral_code IS NOT NULL
+      GROUP BY ur.referral_code
     `;
 
     db.query(query, (err, results) => {
@@ -577,16 +594,15 @@ cron.schedule('0 0 * * *', async () => {
 
       console.log('Referral bet totals:', results);
 
-      // Calculate referral bonus for each superuser
+      // Calculate referral bonus for each referral_code
       results.forEach(result => {
-        const { superuser_code, total_bet } = result;
+        const { referral_code, total_bet } = result;
 
-        // Calculate the referral bonus (total bet * bonus percentage)
         const referralBonus = total_bet * bonusPercentage;
 
         // Store the results (total bet and referral bonus) in the cache
-        cache.set(`superuser:${superuser_code}:total_bet`, total_bet);
-        cache.set(`superuser:${superuser_code}:referral_bonus`, referralBonus); // Store referral bonus
+        cache.set(`referral_code:${referral_code}:total_bet`, total_bet);
+        cache.set(`referral_code:${referral_code}:referral_bonus`, referralBonus); 
       });
     });
   } catch (error) {
@@ -594,21 +610,20 @@ cron.schedule('0 0 * * *', async () => {
   }
 });
 
-// Endpoint to fetch superuser's referral bonus
-app.get('/superuser/referral-bonus', async (req, res) => {
-  const { superuser_code } = req.query; // Get the superuser code from query parameter
+// Endpoint to fetch referral bonus
+app.get('/referral/referral-bonus', async (req, res) => {
+  const { referral_code } = req.query;
 
   try {
-    // Retrieve referral bonus from cache
-    const referralBonus = await cache.get(`superuser:${superuser_code}:referral_bonus`);
+    const referralBonus = await cache.get(`referral_code:${referral_code}:referral_bonus`);
 
     if (referralBonus) {
       res.json({ success: true, referralBonus });
     } else {
-      res.json({ success: false, message: 'No data found for this superuser' });
+      res.json({ success: false, message: 'No data found for this referral code' });
     }
   } catch (error) {
-    console.error('Error fetching referral bonus for superuser:', error);
+    console.error('Error fetching referral bonus:', error);
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
