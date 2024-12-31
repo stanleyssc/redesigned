@@ -776,3 +776,30 @@ function updateBountyJackpotCards(cards) {
     bountyCardBox.appendChild(imgElement);
   });
 };
+
+// Get necessary elements
+const logoutButton = document.getElementById('logout');
+const playWhotButton = document.getElementById('play-whot');
+const playOtherGamesButton = document.getElementById('landing-page');
+
+// Function to log out the user and invalidate the token
+function logoutUser() {
+  // Remove token and user-related data from localStorage
+  localStorage.removeItem('token');
+  localStorage.removeItem('username');
+  localStorage.removeItem('referral_code');
+
+  // Redirect to the login page
+  window.location.href = 'index.html';
+}
+
+// Redirect to the landing page when clicking "Play WHOT" or "Play Other Games"
+function redirectToLandingPage() {
+  window.location.href = 'landing-page.html';
+}
+
+// Attach event listeners
+logoutButton.addEventListener('click', logoutUser);
+playWhotButton.addEventListener('click', redirectToLandingPage);
+playOtherGamesButton.addEventListener('click', redirectToLandingPage);
+
