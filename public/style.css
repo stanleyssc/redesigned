@@ -545,12 +545,12 @@ button:hover {
 }
 
 .jackpot-message {
-  width: 280px;
+  width: auto;
   height: 38px;
   display: flex;
   font-family: Verdana, Geneva, Tahoma, sans-serif;
   color: #0c0101;
-  font-size: 8px;
+  font-size: 6px;
   align-items: center;
   background-color: rgb(239, 236, 220);
   padding: 2px;
