@@ -17,6 +17,7 @@ const bountyJackpotCards = [
   "circle_12.png"
 ];
 
+
 let cardSet = ["circle_1.png", "circle_2.png", "circle_3.png", "circle_4.png", "circle_5.png", "circle_7.png", "circle_8.png", "circle_10.png", "circle_11.png", "circle_12.png", "circle_13.png", "circle_14.png", "triangle_1.png", "triangle_2.png", "triangle_3.png", "triangle_4.png", "triangle_5.png", "triangle_7.png", "triangle_8.png", "triangle_10.png", "triangle_11.png","triangle_12.png", "triangle_13.png", "triangle_14.png","cross_1.png","cross_2.png", "cross_3.png", "cross_5.png", "cross_7.png", "cross_10.png", "cross_11.png", "cross_13.png", "cross_14.png", "square_1.png", "square_2.png", "square_3.png", "square_5.png", "square_7.png", "square_10.png", "square_11.png", "square_13.png", "square_14.png", "star_1.png", "star_2.png", "star_3.png", "star_4.png", "star_5.png", "star_7.png", "star_8.png", "whot_20.png",
 ];
 
@@ -194,6 +195,8 @@ const payoutMultipliers = {
   bounty: 1000,
 };
 
+
+
 const allMatch = (array, condition) => array.every(condition);
 
 function handleWinActions(payout, jackpotType, winMessage) {
@@ -213,7 +216,8 @@ function calculatePayout() {
 
   if (panelCards.includes(bountyJackpotCards[0]) &&
       panelCards.includes(bountyJackpotCards[1]) &&
-      panelCards.includes(bountyJackpotCards[2]) ) {
+      panelCards.includes(bountyJackpotCards[2]) ) 
+    {
     payout = payoutMultipliers.bounty * selectedBet;
     jackpotType = "Bounty";
     winMessage = `${jackpotType}!! You win ₦${payout}!!!`;
@@ -556,7 +560,7 @@ const closeBtn = document.getElementById("closeProfileModal");
 const form = document.getElementById("updateProfileForm");
 
 // Open the modal when the profile link is clicked
-document.getElementById("viewProfile").addEventListener("click", function () {
+document.getElementById("profileLink").addEventListener("click", function () {
   modal.style.display = "block";
   fetchUserProfile();
 });
@@ -674,30 +678,30 @@ formFields.forEach((field) => {
   });
 });
 
+// Handle dropdown and modal functionality
 document.addEventListener("DOMContentLoaded", function () {
   const dropdownButton = document.getElementById("accountSettings");
-  const dropdownMenu = document.getElementById("dropdownMenu");
+  const dropdownMenu = document.getElementById("accountSettingsDropdown");
+  const profileLink = document.getElementById("profileLink");
+  const modal = document.getElementById("updateProfileModal");
+  const closeModal = document.getElementById("closeProfileModal");
 
   // Flag to track if dropdown is open
   let isDropdownOpen = false;
 
   // Function to toggle the dropdown menu
   function toggleDropdown() {
-    if (isDropdownOpen) {
-      dropdownMenu.style.display = "none";
-    } else {
-      dropdownMenu.style.display = "block"; 
-    }
-    isDropdownOpen = !isDropdownOpen; // Toggle the state
+    dropdownMenu.style.display = isDropdownOpen ? "none" : "block";
+    isDropdownOpen = !isDropdownOpen;
   }
 
-  // Open dropdown when button is clicked or hovered over
+  // Open dropdown when Account Settings is clicked
   dropdownButton.addEventListener("click", function (event) {
     event.stopPropagation();
     toggleDropdown();
   });
 
-  // Close dropdown if clicking anywhere outside
+  // Close dropdown when clicking outside
   document.addEventListener("click", function (event) {
     if (
       !dropdownButton.contains(event.target) &&
@@ -705,14 +709,33 @@ document.addEventListener("DOMContentLoaded", function () {
     ) {
       if (isDropdownOpen) {
         dropdownMenu.style.display = "none";
-        isDropdownOpen = false; 
+        isDropdownOpen = false;
       }
     }
   });
 
-  // Prevent closing dropdown when clicking inside the menu
+  // Prevent closing dropdown when clicking inside
   dropdownMenu.addEventListener("click", function (event) {
-    event.stopPropagation(); 
+    event.stopPropagation();
+  });
+
+  // Open modal when Profile is clicked
+  profileLink.addEventListener("click", function (event) {
+    event.preventDefault();
+    modal.style.display = "block";
+    fetchUserProfile();
+  });
+
+  // Close modal on clicking the close button
+  closeModal.addEventListener("click", function () {
+    modal.style.display = "none";
+  });
+
+  // Close modal on clicking outside the modal content
+  window.addEventListener("click", function (event) {
+    if (event.target === modal) {
+      modal.style.display = "none";
+    }
   });
 });
 
