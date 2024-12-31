@@ -3,40 +3,12 @@ body {
   font-family: 'Montserrat', sans-serif;
   margin: 0;
   padding: 0;
-  background-color: #001f00;
-  background: radial-gradient(circle, #003300, #001a00);
-  color: #ffffff;
-  overflow-x: hidden;
+  background-image: radial-gradient(at 50% 100%, rgb(253, 164, 175), rgb(244, 63, 94));
 }
 
 /* General Reset */
 *, *::before, *::after {
   box-sizing: border-box;
-}
-
-.logo {
-  display: inline-block;
-  width: 100%;
-  font-size: 0.5em; 
-  font-weight: bold;
-  color: #ffcc00; 
-  background: linear-gradient(90deg, #007bff, #0056b3); 
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-transform: uppercase; 
-  letter-spacing: 1.5px; 
-  padding: 0.1vw;
-  margin: 0.2vw 0vw ;
-  border: 0.1vw solid #007bff; 
-  border-radius: 10px; 
-
-  text-align: center;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.welcome-message:hover {
-  transform: scale(1.05); 
-  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
 }
 
 .main-container {
@@ -45,7 +17,7 @@ body {
   flex-direction: column;
   justify-content: space-between;
   align-items: center;
-  background: linear-gradient(145deg, #ff0033, #ff6600);
+  background-image: radial-gradient(at 50% 100%, rgb(189, 36, 54), rgb(42, 1, 8));
   border-radius: 20px;
   width: 90vw;
   max-width: 450px;
@@ -91,7 +63,7 @@ body {
   gap: 12px;
   justify-content: center;
   align-items: center;
-  background: linear-gradient(145deg, #ff6600, #ff0033);
+  background: linear-gradient(145deg, #ff6600, #140105);
   border-radius: 20px;
   padding: 3px;
   box-shadow: 0 20px 35px rgba(255, 102, 0, 0.6);
@@ -106,16 +78,16 @@ body {
   min-height: 49px;
   margin: auto;
   border-radius: 50%;
-  background: #df73eb;
+  background: #ee9fbb;
   border: 2px solid #13a02b;
   color: #000000;
-  font-size: 0.5rem;
+  font-size: 1rem;
   cursor: pointer;
   transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
 }
 
 .bet-button.active {
-  background-color: #259125;
+  background-color: #7b1020;
   color: #ffffff;
   box-shadow: 0 0 15px #00ff00, 0 0 30px #00ff00;
   font-weight: bold;
@@ -217,7 +189,7 @@ body {
   transform: scale(0.95);
 }
 
-/* Refined Pulse Animation */
+/* Pulse Animation */
 @keyframes pulse {
   0% {
     transform: scale(1);
@@ -232,7 +204,6 @@ body {
     box-shadow: 0 0 10px #b97b4e, 0 0 20px #b97b4e;
   }
 }
-
 
 .panel {
   width: 15dvw;
@@ -308,7 +279,7 @@ body {
   border-radius: 10px;
   position: relative;
   padding: 20px;
-  color: #28a745;
+  color: #a50a27;
   font-family: Georgia, 'Times New Roman', Times, serif;
   font-size: 1.4em;
   border-style: double;
@@ -317,42 +288,19 @@ body {
   text-align: center;
 }
 
-/* Mobile optimization */
-@media (max-width: 768px) {
-  .main-container {
-    width: 95vw;
-    height: 85vh;
-  }
-
-  .bet-button {
-    width: 40px;
-    height: 40px;
-    font-size: 16px;
-  }
-
-  .account-balance {
-    font-size: 1em;
-    padding: 5px;
-  }
-
-  .spin-button {
-    font-size: 1.2em;
-    padding: 8px 16px;
-  }
-}
-
 .winners-banner {
-  padding: 0px;
+  padding: 5px;
   height: 5dvh;
-  background: linear-gradient(90deg, #ff6600, #ffd700); 
-  color: rgb(1, 0, 0); 
-  font-size: 1.2em;
-  /* font-weight: bold; */
+  background: hsla(354, 93%, 56%, 0.5); 
+  color: wheat;
+  font-size: 1em;
   width: 105dvw;
   overflow: hidden;
   display: flex;
   align-items: center;
   border-radius: 5px; 
+  border: #f7dadd;
+  border-style: double;
   box-shadow: 0 2px 5px rgba(255, 140, 0, 0.6); 
   animation: bannerGlow 3s infinite alternate;
   position: relative;
@@ -364,7 +312,6 @@ body {
   animation: marquee 80s linear infinite; /* Smooth scrolling text */
   background: -webkit-linear-gradient(90deg, #ffffff, #ffd700, #ffffff);
   -webkit-background-clip: text;
-  
 }
 
 @keyframes bannerGlow {
@@ -392,76 +339,6 @@ body {
   100% {
     box-shadow: 0 4px 20px rgba(255, 215, 0, 0.7);
   }
-}
-
-/* General Styles */
-.top-nav {
-  padding: 10px 20px;
-  background-color: #021a02;
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  border-bottom: 2px solid #0056b3;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  position: relative; 
-}
-
-/* User Info Section */
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 15px; 
-  flex-wrap: wrap; 
-}
-
-.user-info span {
-  font-weight: bold;
-  font-size: 1em;
-  color: #ffcc00;
-}
-
-/* Logout Link */
-.logout {
-  position: absolute; 
-  top: 10px; 
-  right: 20px; 
-  color: white; 
-  text-decoration: none; 
-  font-size: 0.9em; 
-  font-weight: bold;
-  transition: color 0.3s ease, background-color 0.3s ease;
-}
-.landing-page {
-  color: white; 
-  text-decoration: none; 
-  font-size: 0.9em; 
-  font-weight: bold;
-  transition: color 0.3s ease, background-color 0.3s ease;
-}
-
-.logout:hover {
-  color: #ffcc00; 
-  text-decoration: underline;
-}
-
-/* Button Styles */
-.user-info button {
-  padding: 10px 15px;
-  border: none;
-  background-color: #2c5a04;
-  color: white;
-  border-radius: 5px;
-  font-size: 0.7em;
-  cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.2s ease;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-}
-
-.user-info button:hover {
-  background-color: #0056b3;
-  transform: scale(1.05);
 }
 
 /* Dropdown Styles */
@@ -500,41 +377,6 @@ body {
 
 .dropdown:hover .dropdown-menu {
   display: block;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .user-info {
-    justify-content: center;
-    text-align: center;
-  }
-
-  .user-info button,
-  .user-info span {
-    flex: 1 0 auto;
-  }
-
-  .logout {
-    position: static;
-    margin-top: 10px;
-    text-align: right;
-    width: 100%; 
-  }
-
-  .dropdown-menu {
-    position: static;
-    box-shadow: none;
-    background-color: #001a33;
-  }
-
-  .dropdown-menu a {
-    color: white;
-    border-bottom: 1px solid #0056b3;
-  }
-
-  .dropdown-menu a:hover {
-    background-color: #0056b3;
-  }
 }
 
 /* Style for the profile modal */
@@ -617,6 +459,7 @@ button:hover {
   border-radius: 10px;
   width: 90vw;
   max-width: 450px;
+  min-width: 450px;
   margin: 2px auto;
   padding: 5px;
   height: 20dvh;
@@ -752,4 +595,133 @@ button:hover {
   50% {
     opacity: 50%;
   }
+}
+
+.switch {
+  height: auto;
+  width: auto;
+  background-color: blanchedalmond;
+  border: #a72c14;
+  padding: 3px;
+  position: absolute;
+  color: #000000;
+  font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+  font-size: 13px;
+  max-width: 120px;
+  max-height: 60px;
+  min-width: 120px;
+  min-height: 60px;
+  text-align: center;
+  border-radius: 20px;
+  bottom: 3px;
+  right: 3px;
+  cursor: pointer;
+  opacity: 40%;
+  margin: auto;
+}
+
+.header_img {
+  height: 60px;
+  width: auto;
+  margin: 0;
+  display: block;
+  padding: 0;
+}
+
+.header {
+  display: flex;
+  margin: 0rem;
+  padding: 0.5rem;
+  background-color: hsla(84, 81%, 6%, 0.5);
+  justify-content: space-between;
+  align-items: center;
+  padding-block: 0.8rem;
+  padding-inline: 3 rem;
+  column-gap: 1rem;
+  row-gap: 1rem;
+}
+
+.header__ul {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: stretch;
+  text-decoration: none;
+  list-style: none;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+}
+
+.links {
+  color: hsl(150, 35%, 70%);
+  text-decoration: none;
+  transition: color 0.2s ease-in;
+  background-color: hsl(84deg 81% 6% / 60%);
+  padding-inline:1rem;
+  padding-block: 0.6rem;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+  display: block;
+}
+
+.links:hover {
+  color: hsl(150, 35%, 95%);;
+  font-weight: bolder;
+}
+
+body {
+font-family: 'Montserrat', sans-serif;
+margin: 0;
+padding: 0;    
+}
+
+.header-logo {
+margin-block-start: 0em;
+margin-block-end: 0em;
+}
+
+/* Mobile optimization */
+@media screen and (max-width: 842px) {
+.links {
+  font-size: 0.6rem;
+  column-gap: 1rem;
+  row-gap: 0.7rem;
+}
+
+.header {
+  padding-inline: 1rem;
+  column-gap: 0.3rem;
+  row-gap: 0.5rem;
+}
+
+.header__ul {
+  padding-inline: 1rem;
+  column-gap: 0.3rem;
+  row-gap: 0.1rem;
+  gap: 0.1rem;
+  margin: 0;
+  padding: 0;
+  justify-content: space-evenly;
+  }
+
+.header_img {
+  height: 30px;
+  width: auto;
+}
+.bet-button {
+  font-size: 0.8rem;
+}
+}
+
+/* Mobile optimization */
+@media screen and (max-width: 580px) {
+.links {
+  font-size: 0.4rem;
+  column-gap: 1rem;
+  row-gap: 0.7rem;
+}
+.bet-button {
+  font-size: 0.6rem;
+}
 }
