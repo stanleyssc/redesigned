@@ -81,7 +81,7 @@ body {
     background: #ebe6c5;
     border: 2px solid #13a02b;
     color: #000000;
-    font-size: 1rem;
+    font-size: 0.7rem;
     cursor: pointer;
     transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
   }
