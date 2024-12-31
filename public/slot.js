@@ -574,7 +574,7 @@ const closeBtn = document.getElementById("closeProfileModal");
 const form = document.getElementById("updateProfileForm");
 
 // Open the modal when the profile link is clicked
-document.getElementById("viewProfile").addEventListener("click", function () {
+document.getElementById("profileLink").addEventListener("click", function () {
   modal.style.display = "block";
   fetchUserProfile();
 });
@@ -692,30 +692,30 @@ formFields.forEach((field) => {
   });
 });
 
+// Handle dropdown and modal functionality
 document.addEventListener("DOMContentLoaded", function () {
   const dropdownButton = document.getElementById("accountSettings");
-  const dropdownMenu = document.getElementById("dropdownMenu");
+  const dropdownMenu = document.getElementById("accountSettingsDropdown");
+  const profileLink = document.getElementById("accountSettingsDropdown");
+  const modal = document.getElementById("updateProfileModal");
+  const closeModal = document.getElementById("closeProfileModal");
 
   // Flag to track if dropdown is open
   let isDropdownOpen = false;
 
   // Function to toggle the dropdown menu
   function toggleDropdown() {
-    if (isDropdownOpen) {
-      dropdownMenu.style.display = "none";
-    } else {
-      dropdownMenu.style.display = "block"; 
-    }
-    isDropdownOpen = !isDropdownOpen; // Toggle the state
+    dropdownMenu.style.display = isDropdownOpen ? "none" : "block";
+    isDropdownOpen = !isDropdownOpen;
   }
 
-  // Open dropdown when button is clicked or hovered over
+  // Open dropdown when Account Settings is clicked
   dropdownButton.addEventListener("click", function (event) {
     event.stopPropagation();
     toggleDropdown();
   });
 
-  // Close dropdown if clicking anywhere outside
+  // Close dropdown when clicking outside
   document.addEventListener("click", function (event) {
     if (
       !dropdownButton.contains(event.target) &&
@@ -723,25 +723,44 @@ document.addEventListener("DOMContentLoaded", function () {
     ) {
       if (isDropdownOpen) {
         dropdownMenu.style.display = "none";
-        isDropdownOpen = false; 
+        isDropdownOpen = false;
       }
     }
   });
 
-  // Prevent closing dropdown when clicking inside the menu
+  // Prevent closing dropdown when clicking inside
   dropdownMenu.addEventListener("click", function (event) {
-    event.stopPropagation(); 
+    event.stopPropagation();
+  });
+
+  // Open modal when Profile is clicked
+  profileLink.addEventListener("click", function (event) {
+    event.preventDefault();
+    modal.style.display = "block";
+    fetchUserProfile();
+  });
+
+  // Close modal on clicking the close button
+  closeModal.addEventListener("click", function () {
+    modal.style.display = "none";
+  });
+
+  // Close modal on clicking outside the modal content
+  window.addEventListener("click", function (event) {
+    if (event.target === modal) {
+      modal.style.display = "none";
+    }
   });
 });
 
 async function fetchBountyJackpotPrize() {
   try {
-    const response = await fetch('https://slot-backend-f32n.onrender.com/bounty-jackpot');
+    const response = await fetch('https://slot-backend-f32n.onrender.com/bounty-jackpot?panelType=4');
     const data = await response.json();
     const jackpotAmount = data.bountyPrize;
     updateBountyJackpot(jackpotAmount);
   } catch (error) {
-    Sentry.captureException(new Error('Error fetching jackpot prize:', error));
+    Sentry.captureException(new Error('Error fetching jackpot prize: ' + error.message));
   }
 }
 
