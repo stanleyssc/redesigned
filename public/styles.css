@@ -112,3 +112,13 @@ footer {
     font-size: 12px;
     color: #86868b;
 }
+
+.welcome-bonus {
+    top: 20px;
+    width: 100dvw;
+    height: 20dvh;
+    font-size: 4rem;
+    color: green;
+    padding: 15px;
+    margin: 10px;
+    background-color: grey;
