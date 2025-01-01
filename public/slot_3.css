@@ -552,10 +552,8 @@ button:hover {
     font-family: Verdana, Geneva, Tahoma, sans-serif;
     color: #0c0101;
     font-size: 9px;
-    align-items: center;
     text-align: center;
     background-color: rgb(239, 236, 220);
-    padding: 5px;
     border-radius: 5px;
     font-weight: 100;
     margin:auto;
@@ -654,7 +652,7 @@ button:hover {
     width: auto;
     background-color: blanchedalmond;
     border: #a72c14;
-    padding: 5px;
+    padding: 15px;
     position: absolute;
     color: #000000;
     font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
