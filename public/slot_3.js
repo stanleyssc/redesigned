@@ -12,9 +12,10 @@ let isSpinning = false;
 let userWelcome = document.getElementById(".welcome-message");
 let jackpotTriggered = null;
 const bountyJackpotCards = [
-  "square_7.png",
-  "star_4.png",
-  "circle_12.png"
+  "circle_12.png",
+  "circle_4.png",
+  "cross_5.png",
+  "cross_13.png",
 ];
 
 
@@ -97,7 +98,7 @@ function startSpin() {
 
   for (let i = 0; i < currentPanelCount; i++) {
     const wheel = panel[i].querySelector(".wheel");
-    panel[i].mover = Math.floor(Math.random() * 800 + 100);
+    panel[i].mover = Math.floor(Math.random() * 500 + 50);
   }
   game.ani = requestAnimationFrame(spin);
 }
@@ -192,7 +193,6 @@ const payoutMultipliers = {
   platinum: 300,
   gold: 100,
   silver: 20,
-  bounty: 1000,
 };
 
 
@@ -214,16 +214,7 @@ function calculatePayout() {
   let jackpotType = null;
   let winMessage = "";
 
-  if (panelCards.includes(bountyJackpotCards[0]) &&
-      panelCards.includes(bountyJackpotCards[1]) &&
-      panelCards.includes(bountyJackpotCards[2]) ) 
-    {
-    payout = payoutMultipliers.bounty * selectedBet;
-    jackpotType = "Bounty";
-    winMessage = `${jackpotType}!! You win ₦${payout}!!!`;
-    handleWinActions(payout, jackpotType, winMessage);
-  }  
-  else if (panelCards.every(card => card === "whot_20.png")) {
+if (panelCards.every(card => card === "whot_20.png")) {
     payout = payoutMultipliers.ultimate * selectedBet;
     jackpotType = "Ultimate";
     winMessage = `${jackpotType}!! You win ₦${payout}!!!`;
@@ -270,8 +261,6 @@ function updateBountyJackpot(cards, jackpotAmount) {
 
   bountyAmountElement.textContent = `N${jackpotAmount}`; //check
 }
-
-updateBountyJackpot(bountyJackpotCards, "2,000,000");
 
 async function checkToken() {
   try {
