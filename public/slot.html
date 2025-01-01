@@ -23,8 +23,8 @@
         <a href="#" class="links" id="accountSettings">Account Settings</a>
         <ul class="dropdown-menu" id="accountSettingsDropdown">
           <li><a href="#" id="profileLink">Profile</a></li>
-          <li><a href="#">Bet History</a></li>
-          <li><a href="#">Help</a></li>
+          <li><a href="#" id="deposit">Deposit</a></li>
+          <li><a href="#" id="withdrawal">Withdrawal</a></li>
         </ul>
       </li>
       <li><a href="#" class="links" id="logout">Logout</a></li>
@@ -67,6 +67,15 @@
   
       <button type="submit">Update Profile</button>
     </form>
+  </div>
+</div>
+
+  <!-- Modal Structure -->
+<div id="depositWithdrawModal" class="modal-overlay">
+  <div class="modal-content">
+    <h2>Deposit or Withdrawal</h2>
+    <p id="modalMessage"></p>
+    <button id="closeModalButton">Close</button>
   </div>
 </div>
 
