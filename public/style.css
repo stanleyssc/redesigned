@@ -706,8 +706,8 @@ button:hover {
   text-decoration: none;
   transition: color 0.2s ease-in;
   background-color: hsl(84deg 81% 6% / 60%);
-  padding-inline:1rem;
-  padding-block: 0.6rem;
+  padding-inline:8px;
+  padding-block: 8px;
   border-radius: 0.5rem;
   font-size: 0.9rem;
   display: block;
