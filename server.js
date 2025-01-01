@@ -103,7 +103,7 @@ app.post('/register', (req, res) => {
           // Register the user
           db.query(
             'INSERT INTO users (username, password, balance, email, phone_number) VALUES (?, ?, ?, ?, ?)',
-            [username, hashedPassword, 1000, email, phone_number],
+            [username, hashedPassword, 100, email, phone_number],
             (err, insertResult) => {
               if (err) {
                 if (err.code === 'ER_DUP_ENTRY') {
@@ -515,10 +515,10 @@ app.get('/bounty-jackpot', async (req, res) => {
     }
 
     // If no cached prize, calculate it from the database
-    const BASE_PRIZE = 1000;
+    const BASE_PRIZE = 50000;
     const PERCENTAGE = 0.01;
-    const FOUR_PANEL_MULTIPLIER = 0.8;
-    const THREE_PANEL_MULTIPLIER = 0.2;
+    const FOUR_PANEL_MULTIPLIER = 1;
+    const THREE_PANEL_MULTIPLIER = 1;
 
     const lastWinQuery = `
       SELECT MAX(created_at) AS lastWinTime
