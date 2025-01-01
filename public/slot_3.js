@@ -790,3 +790,51 @@ function redirectToLandingPage() {
 logoutButton.addEventListener('click', logoutUser);
 playOtherGamesButton.addEventListener('click', redirectToLandingPage);
 
+function openModal(userId) {
+  const modal = document.getElementById('depositWithdrawModal');
+  const message = document.getElementById('modalMessage');
+  message.innerHTML = `To deposit or withdraw,<br>
+  message us on WhatsApp at 07039504823.<br>
+  Alternatively, click on this link: <a href="https://wa.me/2347039504823" target="_blank" rel="noopener noreferrer">www.wa.me/2347039504823</a><br>
+  Be sure to include your User ID number: ${userId}.`;
+  
+  modal.style.display = 'flex';
+}
+
+function closeModal() {
+  const modal = document.getElementById('depositWithdrawModal');
+  modal.style.display = 'none';
+}
+
+document.getElementById('deposit').addEventListener('click', function(event) {
+  event.preventDefault();
+  fetchUserId(); 
+});
+
+document.getElementById('withdrawal').addEventListener('click', function(event) {
+  event.preventDefault();
+  fetchUserId(); 
+});
+
+document.getElementById('closeModalButton').addEventListener('click', closeModal);
+document.querySelector('.modal-overlay').addEventListener('click', closeModal);
+
+function fetchUserId() {
+  const token = localStorage.getItem("token");
+  fetch("https://slot-backend-f32n.onrender.com/user-info", {
+    method: "GET",
+    headers: {
+      Authorization: token,
+    },
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      const userId = data.user_id;
+      openModal(userId);
+    })
+    .catch((error) => {
+      Sentry.captureException(new Error("Error fetching user profile:", error));
+    });
+}
+
+
