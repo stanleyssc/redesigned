@@ -618,9 +618,12 @@ button:hover {
     max-width: 140px;
     min-width: 140px;
     height: 70px;
+    margin-block-start: 5px;
+    margin-inline-end: 5px;
+    margin-block-end: 5px;
     font-family: Verdana, Geneva, Tahoma, sans-serif;
     color: #0c0101;
-    font-size: 14px;
+    font-size: 12px;
     align-items: center;
     background-color: rgb(239, 236, 220);
     padding: 10px;
