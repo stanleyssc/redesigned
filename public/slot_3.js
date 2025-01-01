@@ -526,7 +526,9 @@ function getToken() {
 
 function playSound() {
   const sound = new Audio("sound.mp3");
-  sound.play();
+  sound.play().catch((error) => {
+    console.error("Error playing sound:", error);
+  });
 }
 
 // Load the confetti script
