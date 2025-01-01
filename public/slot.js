@@ -97,7 +97,7 @@ function startSpin() {
 
   for (let i = 0; i < currentPanelCount; i++) {
     const wheel = panel[i].querySelector(".wheel");
-    panel[i].mover = Math.floor(Math.random() * 800 + 100);
+    panel[i].mover = Math.floor(Math.random() * 500 + 50);
   }
   game.ani = requestAnimationFrame(spin);
 }
@@ -563,8 +563,8 @@ function loadConfettiScript(callback) {
 function celebrateWin() {
   loadConfettiScript(() => {
     confetti({
-      particleCount: 100,
-      spread: 70,
+      particleCount: 200,
+      spread: 90,
       origin: { y: 0.6 },
     });
   });
@@ -795,7 +795,6 @@ function updateBountyJackpotCards(cards) {
 
 // Get necessary elements
 const logoutButton = document.getElementById('logout');
-const playWhotButton = document.getElementById('play-whot');
 const playOtherGamesButton = document.getElementById('landing-page');
 
 // Function to log out the user and invalidate the token
@@ -816,6 +815,5 @@ function redirectToLandingPage() {
 
 // Attach event listeners
 logoutButton.addEventListener('click', logoutUser);
-playWhotButton.addEventListener('click', redirectToLandingPage);
 playOtherGamesButton.addEventListener('click', redirectToLandingPage);
 
