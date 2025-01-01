@@ -279,13 +279,14 @@ body {
   border-radius: 10px;
   position: relative;
   padding: 20px;
-  color: #a50a27;
+  color: #28a745;
   font-family: Georgia, 'Times New Roman', Times, serif;
   font-size: 1.4em;
   border-style: double;
   margin-right: auto;
   margin-left: auto;
   text-align: center;
+  font-weight: 300px;
 }
 
 .winners-banner {
