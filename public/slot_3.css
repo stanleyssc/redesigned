@@ -544,10 +544,10 @@ button:hover {
   }
   
   .jackpot-message {
-    width: 260px;
+    width: 250px;
     height: 38px;
-    max-width: 260px;
-    min-width: 260px;
+    max-width: 250px;
+    min-width: 250px;
     max-height: 38px;
     font-family: Verdana, Geneva, Tahoma, sans-serif;
     color: #0c0101;
@@ -613,9 +613,9 @@ button:hover {
   }
   
   .bounty-jackpot-message {
-    width: 160px;
-    max-width: 160px;
-    min-width: 160px;
+    width: 140px;
+    max-width: 140px;
+    min-width: 140px;
     height: 70px;
     font-family: Verdana, Geneva, Tahoma, sans-serif;
     color: #0c0101;
