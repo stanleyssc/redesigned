@@ -4,11 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Welcome to Naija Gamers</title>
-  <link rel="stylesheet" href="style.css">
-  <script type="module" src="https://js-de.sentry-cdn.com/efcedd90866cd0c12c2144245e25eca9.min.js"
-  crossorigin="anonymous"
-></script>
+  <link id="panel-style" rel="stylesheet" href="style.css">
+  <script type="module" src="https://js-de.sentry-cdn.com/efcedd90866cd0c12c2144245e25eca9.min.js" crossorigin="anonymous"></script>
 </head>
+<body>
 <header class="header">
   <h1 class="header-logo">
     <a href="">
@@ -17,7 +16,7 @@
   </h1>
   <nav class="header__nav">
     <ul class="header__ul">
-      <li><a href="" class="links" id="welcome-message">Welcome</a></li>
+      <li><a href="#" class="links" id="welcome-message">Welcome</a></li>
       <li><a href="#" class="links" id="landing-page">More Games</a></li>
       <li class="dropdown">
         <a href="#" class="links" id="accountSettings">Account Settings</a>
@@ -38,40 +37,29 @@
     <span class="close" id="closeProfileModal">&times;</span>
     <h2>Update Profile</h2>
     <form id="updateProfileForm">
-      <!-- User ID (uneditable) -->
       <label for="user_id">User ID:</label>
       <input type="text" id="user_id" name="user_id" readonly />
-
-      <!-- Referral Code (uneditable) -->
       <label for="referral_code">Referral Code:</label>
       <input type="text" id="referral_code" name="referral_code" readonly />
-  
-      <!-- Editable fields -->
       <label for="username">Username:</label>
       <input type="text" id="username" name="username" placeholder="Enter your username here" />
-  
       <label for="email">Email:</label>
       <input type="email" id="email" name="email" placeholder="Enter your email here" />
-  
       <label for="phone_number">Phone Number:</label>
       <input type="text" id="phone_number" name="phone_number" placeholder="Enter your phone number here" />
-  
       <label for="bank_name">Bank Name:</label>
       <input type="text" id="bank_name" name="bank_name" placeholder="Enter your bank name here" />
-  
       <label for="bank_account_number">Bank Account Number:</label>
       <input type="text" id="bank_account_number" name="bank_account_number" placeholder="Enter your bank account number here" />
-  
       <label for="account_name">Account Name:</label>
       <input type="text" id="account_name" name="account_name" placeholder="Enter your account name here" />
-  
       <button type="submit">Update Profile</button>
     </form>
   </div>
 </div>
 
-  <!-- Modal Structure -->
-<div id="depositWithdrawModal" class="modal-overlay">
+ <!-- Modal Structure -->
+ <div id="depositWithdrawModal" class="modal-overlay">
   <div class="modal-content">
     <h2>Deposit or Withdrawal</h2>
     <p id="modalMessage"></p>
@@ -80,66 +68,54 @@
 </div>
 
 <body>
-  <div class="winners-banner" id="winners-banner">Get ready to win millions!!!</div>
-  
-  <!-- Main Container -->
-  <div class="main-container">
-    <!-- Top Panel: Account Balance + Bet Selection -->
-    <div class="top-panel">
-      <!-- Bet Selection -->
-      <div class="bet-selection">
-        <button class="bet-button">₦10</button>
-        <button class="bet-button">₦50</button>
-        <button class="bet-button">₦100</button>
-        <button class="bet-button">₦500</button>
-      </div>
-        <!-- Account Balance -->
-        <div class="account-balance" id="userBalance">
-          <img src="wallet.webp" alt="Wallet" style="height: 20px; margin-right: 5px;">
-        </div>
-    </div>
-      <!-- Slot Box -->
-      <div class="slot-outer-box">
-        <div class="slot-mid-box">
-          <div class="slot-inner-box">
-            <div class="slot-display">
-            </div>
-          </div>
-      </div>
-      </div>
-      <button class="spin-button">SPIN</button>
-      <div class="switch" id="switch">Switch to 3 Panels FOR BIGGER CHANCES TO WIN!!</div>
-    </div>
 
-    <script>
-      document.getElementById('switch').addEventListener('click', () => {
-        window.location.href = 'slot_3.html';
-      });
-    </script>
+<div class="winners-banner" id="winners-banner">Get ready to win millions!!!</div>
 
-      <!-- Message Box -->
-  <div class="messageBox">
-    Please select your bet.
+<!-- Main Container -->
+<div class="main-container">
+  <!-- Top Panel: Account Balance + Bet Selection -->
+  <div class="top-panel">
+    <div class="bet-selection">
+      <button class="bet-button">₦10</button>
+      <button class="bet-button">₦50</button>
+      <button class="bet-button">₦100</button>
+      <button class="bet-button">₦500</button>
+    </div>
+    <div class="account-balance" id="userBalance">
+      <img src="wallet.webp" alt="Wallet" style="height: 20px; margin-right: 5px;">
+    </div>
   </div>
 
-  <div class="info" id="info">
-  <!-- Jackpot Box -->
-<div class="bounty-box" id="bounty-box">
-  <div class="bounty-row-container">
-    <!-- Bounty Jackpot -->
-    <div class="bounty-plate" id="bounty-plate">
-      <div class="bounty-card-box" id="bounty-card-box"> 
+  <!-- Slot Box -->
+  <div class="slot-container" id="slot-container">
+    <!-- Dynamic slot panels will be inserted here -->
+  </div>
+  <button class="spin-button">SPIN</button>
+  <div class="switch" id="switch">Switch to Four Panels FOR BIGGER JACKPOTS!!</div>
+</div>
+
+<!-- Message Box -->
+<div class="messageBox">Please select your bet.</div>
+
+<div class="info" id="info">
+  <!-- Jackpot Section -->
+  <div class="bounty-box" id="bounty-box">
+    <div class="bounty-row-container">
+      <div class="bounty-plate" id="bounty-plate">
+        <div class="bounty-card-box" id="bounty-card-box"></div>
+        <div class="bounty-jackpot-message" id="bounty-jackpot-message">
+          <h3>Progressive Jackpot!! <span id="bounty-amount">NGN</span></h3>
+        </div>
       </div>
-      <div class="bounty-jackpot-message" id="bounty-jackpot-message">
-        <h3>Progressive Jackpot!! <span id="bounty-amount">NGN</span></h3>
-      </div>
     </div>
-    </div>
-    </div>
-    </div>
+  </div>
+</div>
 
 <!-- Jackpot Box -->
 <div class="jackpot-box" id="jackpot-box">
+
+  <!-- Four-panel layout -->
+  <div id="fourPanel" class="panel-layout hidden">
   <div class="jackpot-row-container">
     <!-- Ultimate Jackpot -->
     <div class="plate" id="plate">
@@ -150,7 +126,7 @@
         <img src="cards/whot_20.png" alt="Square Card" class="card-image">
       </div>
       <div class="jackpot-message" id="ultimate-jackpot-message">
-        <h3>Ultimate Jackpot! Win 2000 times your bet amount</h3>
+        <h3>Ultimate Jackpot!<br> Win 2000 times your bet amount</h3>
       </div>
     </div>
     <!-- Platinum-->
@@ -162,7 +138,7 @@
         <img src="cards/circle_13.png" alt="Square Card" class="card-image">
       </div>
       <div class="jackpot-message" id="gold-jackpot-message">
-        <h3>Platinum Jackpot! Win 2000 times your bet amount</h3>
+        <h3>Platinum Jackpot!<br> Win 1000 times your bet amount</h3>
       </div>
     </div>
       <!-- Gold-->
@@ -174,7 +150,7 @@
           <img src="cards/square_1.png" alt="Square Card" class="card-image">
         </div>
         <div class="jackpot-message" id="gold-jackpot-message">
-          <h3>Gold Jackpot! Win 2000 times your bet amount</h3>
+          <h3>Gold Jackpot!<br> Win 200 times your bet amount</h3>
         </div>
       </div>
     <!-- Silver Jackpot -->
@@ -186,12 +162,65 @@
         <img src="cards/square_13.png" alt="Square Card" class="card-image">
       </div>
       <div class="jackpot-message" id="silver-jackpot-message">
-        <h3>Silver Jackpot! Win 2000 times your bet amount</h3>
+        <h3>Silver Jackpot!<br> Win 50 times your bet amount</h3>
       </div>
     </div>
     </div>
 </div>
+
+ <!-- Three-panel layout -->
+ <div id="threePanel" class="panel-layout hidden">
+
+<div class="jackpot-row-container">
+  <!-- Ultimate Jackpot -->
+  <div class="plate" id="plate">
+    <div class="card-box" id="card-box">
+      <img src="cards/whot_20.png" alt="WHOT_20 Card" class="card-image">
+      <img src="cards/whot_20.png" alt="Circle Card" class="card-image">
+      <img src="cards/whot_20.png" alt="Star Card" class="card-image">
+    </div>
+    <div class="jackpot-message" id="ultimate-jackpot-message">
+      <h3>Ultimate Jackpot!<br> Win 1000 times your bet amount</h3>
+    </div>
+  </div>
+  <!-- Platinum-->
+  <div class="plate" id="plate">
+    <div class="card-box" id="card-box">
+      <img src="cards/circle_13.png" alt="WHOT_20 Card" class="card-image">
+      <img src="cards/circle_13.png" alt="Circle Card" class="card-image">
+      <img src="cards/circle_13.png" alt="Star Card" class="card-image">
+    </div>
+    <div class="jackpot-message" id="gold-jackpot-message">
+      <h3>Platinum Jackpot!<br> Win 500 times your bet amount</h3>
+    </div>
+  </div>
+    <!-- Gold-->
+    <div class="plate" id="plate">
+      <div class="card-box" id="card-box">
+        <img src="cards/cross_1.png" alt="WHOT_20 Card" class="card-image">
+        <img src="cards/triangle_1.png" alt="Circle Card" class="card-image">
+        <img src="cards/star_1.png" alt="Star Card" class="card-image">
+      </div>
+      <div class="jackpot-message" id="gold-jackpot-message">
+        <h3>Gold Jackpot!<br> Win 50 times your bet amount</h3>
+      </div>
+    </div>
+  <!-- Silver Jackpot -->
+  <div class="plate" id="plate">
+    <div class="card-box" id="card-box">
+      <img src="cards/square_10.png" alt="WHOT_20 Card" class="card-image">
+      <img src="cards/square_1.png" alt="Circle Card" class="card-image">
+      <img src="cards/square_3.png" alt="Star Card" class="card-image">
+    </div>
+    <div class="jackpot-message" id="silver-jackpot-message">
+      <h3>Silver Jackpot!<br> Win 10 times your bet amount</h3>
+    </div>
+  </div>
+  </div>
 </div>
-<script src="slot.js"></script>
+</div>
+
+</div>
+<script src="slot-obfuscated.js" defer></script>
 </body>
 </html>
