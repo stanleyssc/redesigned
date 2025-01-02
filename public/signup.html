@@ -5,31 +5,32 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sign Up</title>
   <link rel="stylesheet" href="styles.css">
-  <script type="module" src="https://js-de.sentry-cdn.com/efcedd90866cd0c12c2144245e25eca9.min.js"
-  crossorigin="anonymous"
-></script>
+  <script type="module" src="https://js-de.sentry-cdn.com/efcedd90866cd0c12c2144245e25eca9.min.js" crossorigin="anonymous"></script>
 </head>
 <body>
   <div class="container">
     <h1>Sign Up</h1>
     <form id="signupForm">
-  <label for="signupUsername">Username</label>
-  <input type="text" id="signupUsername" name="username" placeholder="Create a username" required autofocus>
-  
-  <label for="signupPassword">Password</label>
-  <input type="password" id="signupPassword" name="password" placeholder="Create a password" required>
-  
-  <label for="signupEmail">Email</label>
-  <input type="email" id="signupEmail" name="email" placeholder="Enter your email">
-  
-  <label for="signupPhoneNumber">Phone Number</label>
-  <input type="text" id="signupPhoneNumber" name="phone_number" placeholder="Enter your phone number">
-  
-  <label for="referralCode">Referral Code (Optional)</label>
-  <input type="text" id="referralCode" name="referrerCode" placeholder="Enter referral code">
-  
-  <button type="submit">Sign Up</button>
-</form>
+      <label for="signupUsername">Username</label>
+      <input type="text" id="signupUsername" name="username" placeholder="Create a username" required autofocus>
+      
+      <label for="signupPassword">Password</label>
+      <input type="password" id="signupPassword" name="password" placeholder="Create a password" required>
+      
+      <label for="confirmPassword">Confirm Password</label>
+      <input type="password" id="confirmPassword" name="confirm_password" placeholder="Confirm your password" required>
+      
+      <label for="signupEmail">Email</label>
+      <input type="email" id="signupEmail" name="email" placeholder="Enter your email">
+      
+      <label for="signupPhoneNumber">Phone Number</label>
+      <input type="text" id="signupPhoneNumber" name="phone_number" placeholder="Enter your phone number">
+      
+      <label for="referralCode">Referral Code (Optional)</label>
+      <input type="text" id="referralCode" name="referrerCode" placeholder="Enter referral code">
+      
+      <button type="submit">Sign Up</button>
+    </form>
     
     <p id="loginText">Already have an account? <a href="index.html">Log in here</a>.</p>
     <p id="statusMessage"></p> <!-- To display success or error messages -->
@@ -45,8 +46,14 @@
 
       const username = document.getElementById('signupUsername').value;
       const password = document.getElementById('signupPassword').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
       const email = document.getElementById('signupEmail').value;
       const phoneNumber = document.getElementById('signupPhoneNumber').value;
+
+      // Ensure passwords match
+      if (password !== confirmPassword) {
+        return alert('Passwords do not match. Please try again.');
+      }
 
       // Ensure at least one of email or phone number is provided
       if (!email && !phoneNumber) {
