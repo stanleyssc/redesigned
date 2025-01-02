@@ -11,6 +11,10 @@ body {
   box-sizing: border-box;
 }
 
+.hidden {
+  display: none;
+}
+
 .main-container {
   position: relative;
   display: flex;
@@ -40,8 +44,8 @@ body {
 
 /* Account Balance */
 .account-balance {
-  font-size: 0.6em;
-  padding: 3px;
+  font-size: 0.9em;
+  padding: 5px;
   border: 3px solid #ffff00;
   border-radius: 10px;
   background: linear-gradient(to right, #0033ff, #ff6600);
@@ -76,14 +80,15 @@ body {
   max-height: 59px;
   min-width: 49px;
   min-height: 49px;
-  margin: auto;
   border-radius: 50%;
   background: #ee9fbb;
   border: 2px solid #13a02b;
   color: #000000;
   font-size: 0.7rem;
+  text-align: center;
   cursor: pointer;
   transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+  padding: 6px;
 }
 
 .bet-button.active {
@@ -211,9 +216,9 @@ body {
   max-width: 90px;
   min-width: 78px;
   overflow: hidden;
-  background: #74e3f5;
+  background: #170201;
   position: relative;
-  border-radius: 20px;
+  border-radius: 2px;
   max-height: 125px;
   min-height: 125px;
 }
@@ -495,7 +500,6 @@ button:hover {
 
 .jackpot-box {
   position: relative;
-  border: #74e3f5;
   border-style: double;
   background-color: #225910;
   border-radius: 10px;
@@ -548,15 +552,25 @@ button:hover {
 .jackpot-message {
   width: 300px;
   height: 38px;
-  display: flex;
   font-family: Verdana, Geneva, Tahoma, sans-serif;
   color: #0c0101;
-  font-size: 6px;
+  font-size: 9px;
   align-items: center;
+  text-align: center;
   background-color: rgb(239, 236, 220);
   padding: 2px;
   border-radius: 5px;
   font-weight: 100;
+}
+
+h3 {
+  display: block;
+  font-size: 1.17em;
+  margin-block-start: 0.4em;
+  margin-inline-start: 0px;
+  margin-inline-end: 0px;
+  font-weight: bold;
+  unicode-bidi: isolate;
 }
 
 .bounty-box {
@@ -648,7 +662,6 @@ button:hover {
   padding: 10px;
   position: absolute;
   color: #000000;
-  font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
   font-size: 10px;
   font-weight: bolder;
   max-width: 120px;
@@ -771,9 +784,9 @@ button:hover {
 /* Mobile optimization */
 @media screen and (max-width: 857px) {
 .links {
-  font-size: 0.6rem;
+  font-size: 0.7rem;
   column-gap: 1rem;
-  row-gap: 0.7rem;
+  row-gap: 0.9rem;
 }
 
 .header {
