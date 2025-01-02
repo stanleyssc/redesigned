@@ -69,14 +69,6 @@ const generateToken = (userId) => {
 };
 
 // Updated Registration Endpoint
-const express = require('express');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const db = require('./db'); // Assuming the database connection is exported from a file named db
-
-const app = express();
-app.use(express.json());
-
 // Generate a unique referral code
 async function generateUniqueReferralCode() {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
