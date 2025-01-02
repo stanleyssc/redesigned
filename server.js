@@ -14,7 +14,7 @@ app.use(express.json());
 app.get('/', (req, res) => {
   res.status(200).json({
     status: 'success',
-    message: 'Server is live and running!n',
+    message: 'Server is live and running!o',
   });
 });
 
@@ -68,108 +68,122 @@ const generateToken = (userId) => {
   );
 };
 
-// Registration endpoint
-app.post('/register', (req, res) => {
-  const { username, password, email, phone_number, referrerCode } = req.body;
+// Updated Registration Endpoint
+const express = require('express');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const db = require('./db'); // Assuming the database connection is exported from a file named db
 
-  if (!username || !password || (!email && !phone_number)) {
-    return res.status(400).json({
-      error: 'Username, password, and either email or phone number are required',
-    });
-  }
+const app = express();
+app.use(express.json());
 
-  // Generate a unique referral code
-  const referralCode = generateUniqueReferralCode();
-
-  bcrypt.hash(password, 10, (err, hashedPassword) => {
-    if (err) {
-      console.error('Error hashing password:', err);
-      return res.status(500).json({ error: 'Error hashing password' });
-    }
-
-    // Handle referral code logic if provided
-    let referrerId = null;
-    if (referrerCode) {
-      db.query(
-        'SELECT user_id FROM users WHERE referralCode = ?',
-        [referrerCode],
-        (err, referrerResult) => {
-          if (err) {
-            console.error('Error checking referral code:', err);
-            return res.status(500).json({ error: 'Error checking referral code' });
-          }
-
-          if (referrerResult.length === 0) {
-            return res.status(400).json({ error: 'Invalid referral code' });
-          }
-
-          referrerId = referrerResult[0].user_id;
-
-          registerUser(username, hashedPassword, email, phone_number, referralCode, referrerId, res);
-        }
-      );
-    } else {
-      // No referral code provided
-      registerUser(username, hashedPassword, email, phone_number, referralCode, null, res);
-    }
-  });
-});
-
-// Function to register a user
-function registerUser(username, password, email, phone_number, referralCode, referrerId, res) {
-  db.query(
-    'INSERT INTO users (username, password, balance, email, phone_number, referralCode) VALUES (?, ?, ?, ?, ?, ?)',
-    [username, password, 200, email, phone_number, referralCode],
-    (err, insertResult) => {
-      if (err) {
-        console.error('Error registering user:', err);
-        if (err.code === 'ER_DUP_ENTRY') {
-          return res.status(400).json({
-            error: 'Username, email, or phone number already exists',
-          });
-        }
-        return res.status(500).json({ error: 'Internal server error' });
-      }
-
-      const newUserId = insertResult.insertId;
-
-      // Log referral if referrerId is provided
-      if (referrerId) {
-        db.query(
-          'INSERT INTO user_referrals (referrer_id, referred_id) VALUES (?, ?)',
-          [referrerId, newUserId],
-          (err) => {
-            if (err) {
-              console.error('Error logging referral:', err);
-            }
-          }
-        );
-      }
-
-      const token = generateToken(newUserId);
-      res.status(201).json({ message: 'User registered successfully', token });
-    }
-  );
-}
-
-// Function to generate a unique referral code
-function generateUniqueReferralCode() {
+// Generate a unique referral code
+async function generateUniqueReferralCode() {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   let code;
   let isUnique = false;
 
   while (!isUnique) {
     code = 'A' + Math.random().toString(36).substr(2, 4).toUpperCase();
-    db.query('SELECT referralCode FROM users WHERE referralCode = ?', [code], (err, result) => {
-      if (err) {
-        console.error('Error checking referral code uniqueness:', err);
-      }
-      isUnique = result.length === 0;
+    const result = await new Promise((resolve, reject) => {
+      db.query('SELECT referralCode FROM users WHERE referralCode = ?', [code], (err, result) => {
+        if (err) {
+          console.error('Error checking referral code uniqueness:', err.message);
+          reject(err);
+        }
+        resolve(result);
+      });
     });
+    isUnique = result.length === 0;
   }
 
   return code;
 }
+
+// Function to register a user
+async function registerUser(username, password, email, phone_number, referralCode, referrerId) {
+  return new Promise((resolve, reject) => {
+    db.query(
+      'INSERT INTO users (username, password, balance, email, phone_number, referralCode) VALUES (?, ?, ?, ?, ?, ?)',
+      [username, password, 200, email, phone_number, referralCode],
+      (err, insertResult) => {
+        if (err) {
+          console.error('Error registering user:', err.message);
+          reject(err);
+        } else {
+          const newUserId = insertResult.insertId;
+
+          // Log referral if referrerId is provided
+          if (referrerId) {
+            db.query(
+              'INSERT INTO user_referrals (referrer_id, referred_id) VALUES (?, ?)',
+              [referrerId, newUserId],
+              (referralErr) => {
+                if (referralErr) {
+                  console.error('Error logging referral:', referralErr.message);
+                }
+              }
+            );
+          }
+          resolve(newUserId);
+        }
+      }
+    );
+  });
+}
+
+// Registration endpoint
+app.post('/register', async (req, res) => {
+  try {
+    const { username, password, email, phone_number, referrerCode } = req.body;
+
+    if (!username || !password || (!email && !phone_number)) {
+      return res.status(400).json({
+        error: 'Username, password, and either email or phone number are required',
+      });
+    }
+
+    // Generate a unique referral code
+    const referralCode = await generateUniqueReferralCode();
+
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Validate referral code if provided
+    let referrerId = null;
+    if (referrerCode) {
+      const referrerResult = await new Promise((resolve, reject) => {
+        db.query(
+          'SELECT user_id FROM users WHERE referralCode = ?',
+          [referrerCode],
+          (err, result) => {
+            if (err) reject(err);
+            resolve(result);
+          }
+        );
+      });
+
+      if (referrerResult.length === 0) {
+        return res.status(400).json({ error: 'Invalid referral code' });
+      }
+
+      referrerId = referrerResult[0].user_id;
+    }
+
+    // Register the user
+    const newUserId = await registerUser(username, hashedPassword, email, phone_number, referralCode, referrerId);
+
+    // Generate token for the new user
+    const token = jwt.sign({ userId: newUserId }, 'your_secret_key', { expiresIn: '7d' });
+
+    return res.status(201).json({ message: 'User registered successfully', token });
+  } catch (err) {
+    console.error('Error during registration:', err.message);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+module.exports = app;
 
 //Login endpoint
 app.post('/login', (req, res) => {
