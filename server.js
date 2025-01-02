@@ -68,7 +68,7 @@ const generateToken = (userId) => {
   );
 };
 
-//Registration endpoint
+// Registration endpoint
 app.post('/register', (req, res) => {
   const { username, password, email, phone_number, referrerCode } = req.body;
 
@@ -78,19 +78,24 @@ app.post('/register', (req, res) => {
     });
   }
 
+  // Generate a unique referral code
+  const referralCode = generateUniqueReferralCode();
+
   bcrypt.hash(password, 10, (err, hashedPassword) => {
     if (err) {
+      console.error('Error hashing password:', err);
       return res.status(500).json({ error: 'Error hashing password' });
     }
 
-    // Check if referrer code is provided and valid
+    // Handle referral code logic if provided
     let referrerId = null;
     if (referrerCode) {
       db.query(
-        'SELECT user_id FROM users WHERE superuserCode = ?',
+        'SELECT user_id FROM users WHERE referralCode = ?',
         [referrerCode],
         (err, referrerResult) => {
           if (err) {
+            console.error('Error checking referral code:', err);
             return res.status(500).json({ error: 'Error checking referral code' });
           }
 
@@ -98,66 +103,73 @@ app.post('/register', (req, res) => {
             return res.status(400).json({ error: 'Invalid referral code' });
           }
 
-          referrerId = referrerResult[0].user_id; // Extract referrer user_id
+          referrerId = referrerResult[0].user_id;
 
-          // Register the user
-          db.query(
-            'INSERT INTO users (username, password, balance, email, phone_number) VALUES (?, ?, ?, ?, ?)',
-            [username, hashedPassword, 100, email, phone_number],
-            (err, insertResult) => {
-              if (err) {
-                if (err.code === 'ER_DUP_ENTRY') {
-                  return res.status(400).json({
-                    error: 'Username, email, or phone number already exists',
-                  });
-                }
-                return res.status(500).json({ error: 'Internal server error' });
-              }
-
-              const newUserId = insertResult.insertId;
-
-              // Log the referral if referrerCode is provided
-              if (referrerId) {
-                db.query(
-                  'INSERT INTO user_referrals (superuserCode, user_id) VALUES (?, ?)',
-                  [referrerCode, newUserId],
-                  (err) => {
-                    if (err) {
-                      console.error('Error logging referral:', err);
-                    }
-                  }
-                );
-              }
-
-              const token = generateToken(newUserId);
-              res.status(201).json({ message: 'User registered successfully', token });
-            }
-          );
+          registerUser(username, hashedPassword, email, phone_number, referralCode, referrerId, res);
         }
       );
     } else {
-      // Register the user without referral code
-      db.query(
-        'INSERT INTO users (username, password, balance, email, phone_number) VALUES (?, ?, ?, ?, ?)',
-        [username, hashedPassword, 1000, email, phone_number],
-        (err, insertResult) => {
-          if (err) {
-            if (err.code === 'ER_DUP_ENTRY') {
-              return res.status(400).json({
-                error: 'Username, email, or phone number already exists',
-              });
-            }
-            return res.status(500).json({ error: 'Internal server error' });
-          }
-
-          const newUserId = insertResult.insertId;
-          const token = generateToken(newUserId);
-          res.status(201).json({ message: 'User registered successfully', token });
-        }
-      );
+      // No referral code provided
+      registerUser(username, hashedPassword, email, phone_number, referralCode, null, res);
     }
   });
 });
+
+// Function to register a user
+function registerUser(username, password, email, phone_number, referralCode, referrerId, res) {
+  db.query(
+    'INSERT INTO users (username, password, balance, email, phone_number, referralCode) VALUES (?, ?, ?, ?, ?, ?)',
+    [username, password, 200, email, phone_number, referralCode],
+    (err, insertResult) => {
+      if (err) {
+        console.error('Error registering user:', err);
+        if (err.code === 'ER_DUP_ENTRY') {
+          return res.status(400).json({
+            error: 'Username, email, or phone number already exists',
+          });
+        }
+        return res.status(500).json({ error: 'Internal server error' });
+      }
+
+      const newUserId = insertResult.insertId;
+
+      // Log referral if referrerId is provided
+      if (referrerId) {
+        db.query(
+          'INSERT INTO user_referrals (referrer_id, referred_id) VALUES (?, ?)',
+          [referrerId, newUserId],
+          (err) => {
+            if (err) {
+              console.error('Error logging referral:', err);
+            }
+          }
+        );
+      }
+
+      const token = generateToken(newUserId);
+      res.status(201).json({ message: 'User registered successfully', token });
+    }
+  );
+}
+
+// Function to generate a unique referral code
+function generateUniqueReferralCode() {
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let code;
+  let isUnique = false;
+
+  while (!isUnique) {
+    code = 'A' + Math.random().toString(36).substr(2, 4).toUpperCase();
+    db.query('SELECT referralCode FROM users WHERE referralCode = ?', [code], (err, result) => {
+      if (err) {
+        console.error('Error checking referral code uniqueness:', err);
+      }
+      isUnique = result.length === 0;
+    });
+  }
+
+  return code;
+}
 
 //Login endpoint
 app.post('/login', (req, res) => {
