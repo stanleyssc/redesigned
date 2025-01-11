@@ -14,7 +14,7 @@ app.use(express.json());
 app.get('/', (req, res) => {
   res.status(200).json({
     status: 'success',
-    message: 'Server is live and running!u',
+    message: 'Server is live and running!v',
   });
 });
 
@@ -171,39 +171,61 @@ app.post('/register', async (req, res) => {
 
 module.exports = app;
 
-// Reset Password Functionality
+// Reset Password Functionality with Date of Birth Validation
 app.post('/reset-password', (req, res) => {
-  const { username, newPassword } = req.body;
+  const { username, dob, newPassword } = req.body;
 
-  if (!username || !newPassword) {
-    return res.status(400).json({ error: 'Username and new password are required' });
+  if (!username || !dob || !newPassword) {
+    return res.status(400).json({ error: 'Username, date of birth, and new password are required' });
   }
 
-  // Hash the new password
-  bcrypt.hash(newPassword, 10, (err, hashedPassword) => {
-    if (err) {
-      return res.status(500).json({ error: 'Error hashing the password' });
-    }
-
-    // Update the password
-    db.query(
-      'UPDATE users SET password = ? WHERE username = ?',
-      [hashedPassword, username],
-      (updateErr, result) => {
-        if (updateErr) {
-          console.error('Error updating password:', updateErr.message);
-          return res.status(500).json({ error: 'Error updating password' });
-        }
-
-        if (result.affectedRows === 0) {
-          return res.status(400).json({ error: 'User not found' });
-        }
-
-        return res.status(200).json({ message: 'Password reset successfully' });
+  // Validate the date of birth
+  db.query(
+    'SELECT date_of_birth FROM users WHERE username = ?',
+    [username],
+    (err, result) => {
+      if (err) {
+        console.error('Error querying database:', err.message);
+        return res.status(500).json({ error: 'Error verifying user information' });
       }
-    );
-  });
+
+      if (result.length === 0) {
+        return res.status(400).json({ error: 'User not found' });
+      }
+
+      const storedDob = result[0].date_of_birth;
+      if (storedDob !== dob) {
+        return res.status(400).json({ error: 'Invalid date of birth' });
+      }
+
+      // Hash the new password
+      bcrypt.hash(newPassword, 10, (hashErr, hashedPassword) => {
+        if (hashErr) {
+          return res.status(500).json({ error: 'Error hashing the password' });
+        }
+
+        // Update the password
+        db.query(
+          'UPDATE users SET password = ? WHERE username = ?',
+          [hashedPassword, username],
+          (updateErr, updateResult) => {
+            if (updateErr) {
+              console.error('Error updating password:', updateErr.message);
+              return res.status(500).json({ error: 'Error updating password' });
+            }
+
+            if (updateResult.affectedRows === 0) {
+              return res.status(400).json({ error: 'User not found' });
+            }
+
+            return res.status(200).json({ message: 'Password reset successfully' });
+          }
+        );
+      });
+    }
+  );
 });
+
 
 //Login endpoint
 app.post('/login', (req, res) => {
@@ -241,8 +263,6 @@ app.post('/login', (req, res) => {
       res.status(200).json({
         token,
         username: user.username,
-        isSuperuser: user.isSuperuser, 
-        superuserCode: user.superuserCode,
       });
     });
   });
