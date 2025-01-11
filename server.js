@@ -14,7 +14,7 @@ app.use(express.json());
 app.get('/', (req, res) => {
   res.status(200).json({
     status: 'success',
-    message: 'Server is live and running!s',
+    message: 'Server is live and running!t',
   });
 });
 
@@ -94,17 +94,19 @@ async function generateUniqueReferralCode() {
 
 async function registerUser(username, password, email, phone_number, referralCode, referrerId, dob) {
   return new Promise((resolve, reject) => {
+    console.log('Registering user with:', { username, email, dob, referralCode, referrerId });
+
     db.query(
       'INSERT INTO users (username, password, balance, email, phone_number, referralCode, referrerId, date_of_birth) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [username, password, 200, email, phone_number, referralCode, dob],
+      [username, password, 200, email, phone_number, referralCode, referrerId, dob],
       (err, insertResult) => {
         if (err) {
           console.error('Error registering user:', err.message);
           reject(err);
         } else {
           const newUserId = insertResult.insertId;
+          console.log('User successfully registered with ID:', newUserId);
 
-          // Log referral if referrerId is provided
           if (referrerId) {
             db.query(
               'INSERT INTO user_referrals (referrer_id, referred_id) VALUES (?, ?)',
@@ -116,6 +118,7 @@ async function registerUser(username, password, email, phone_number, referralCod
               }
             );
           }
+
           resolve(newUserId);
         }
       }
@@ -157,16 +160,19 @@ app.post('/reset-password', (req, res) => {
   });
 });
 
-// Registration endpoint
 app.post('/register', async (req, res) => {
   try {
-    const { username, password, email, phone_number, referrerCode } = req.body;
+    const { username, password, email, phone_number, referrerCode, dob } = req.body;
 
+    // Validate input
     if (!username || !password || (!email && !phone_number)) {
       return res.status(400).json({
         error: 'Username, password, and either email or phone number are required',
       });
     }
+
+    // Ensure dob is in correct format
+    const formattedDob = dob ? new Date(dob).toISOString().split('T')[0] : null;
 
     // Generate a unique referral code
     const referralCode = await generateUniqueReferralCode();
@@ -188,7 +194,7 @@ app.post('/register', async (req, res) => {
         );
       });
 
-      if (referrerResult.length === 0) {
+      if (!referrerResult || referrerResult.length === 0) {
         return res.status(400).json({ error: 'Invalid referral code' });
       }
 
@@ -196,7 +202,7 @@ app.post('/register', async (req, res) => {
     }
 
     // Register the user
-    const newUserId = await registerUser(username, hashedPassword, email, phone_number, referralCode, referrerId, dob);
+    const newUserId = await registerUser(username, hashedPassword, email, phone_number, referralCode, referrerId, formattedDob);
 
     // Generate token for the new user
     const token = jwt.sign({ userId: newUserId }, 'your_secret_key', { expiresIn: '7d' });
