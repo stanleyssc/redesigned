@@ -14,7 +14,7 @@ app.use(express.json());
 app.get('/', (req, res) => {
   res.status(200).json({
     status: 'success',
-    message: 'Server is live and running!v',
+    message: 'Server is live and running!w',
   });
 });
 
@@ -181,7 +181,7 @@ app.post('/reset-password', (req, res) => {
 
   // Validate the date of birth
   db.query(
-    'SELECT date_of_birth FROM users WHERE username = ?',
+    'SELECT user_id, date_of_birth FROM users WHERE username = ?',
     [username],
     (err, result) => {
       if (err) {
@@ -218,7 +218,11 @@ app.post('/reset-password', (req, res) => {
               return res.status(400).json({ error: 'User not found' });
             }
 
-            return res.status(200).json({ message: 'Password reset successfully' });
+            // Generate a new token
+            const newToken = jwt.sign({ userId: result[0].user_id }, 'your_secret_key', { expiresIn: '7d' });
+
+            // Send the new token in the response
+            return res.status(200).json({ message: 'Password reset successfully', token: newToken });
           }
         );
       });
