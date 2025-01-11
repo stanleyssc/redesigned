@@ -14,7 +14,7 @@ app.use(express.json());
 app.get('/', (req, res) => {
   res.status(200).json({
     status: 'success',
-    message: 'Server is live and running!p',
+    message: 'Server is live and running!q',
   });
 });
 
@@ -92,7 +92,7 @@ async function generateUniqueReferralCode() {
   return code;
 }
 
-async function registerUser(username, password, email, phone_number, referralCode, referrerId, dateOfBirth) {
+async function registerUser(username, password, email, phone_number, referralCode, referrerId, dob) {
   return new Promise((resolve, reject) => {
     db.query(
       'INSERT INTO users (username, password, balance, email, phone_number, referralCode, date_of_birth) VALUES (?, ?, ?, ?, ?, ?, ?)',
