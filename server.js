@@ -14,7 +14,7 @@ app.use(express.json());
 app.get('/', (req, res) => {
   res.status(200).json({
     status: 'success',
-    message: 'Server is live and running!r',
+    message: 'Server is live and running!s',
   });
 });
 
@@ -95,7 +95,7 @@ async function generateUniqueReferralCode() {
 async function registerUser(username, password, email, phone_number, referralCode, referrerId, dob) {
   return new Promise((resolve, reject) => {
     db.query(
-      'INSERT INTO users (username, password, balance, email, phone_number, referralCode, date_of_birth) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO users (username, password, balance, email, phone_number, referralCode, referrerId, date_of_birth) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
       [username, password, 200, email, phone_number, referralCode, dob],
       (err, insertResult) => {
         if (err) {
@@ -196,7 +196,7 @@ app.post('/register', async (req, res) => {
     }
 
     // Register the user
-    const newUserId = await registerUser(username, hashedPassword, email, phone_number, referralCode, referrerId);
+    const newUserId = await registerUser(username, hashedPassword, email, phone_number, referralCode, referrerId, dob);
 
     // Generate token for the new user
     const token = jwt.sign({ userId: newUserId }, 'your_secret_key', { expiresIn: '7d' });
