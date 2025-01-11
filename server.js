@@ -14,7 +14,7 @@ app.use(express.json());
 app.get('/', (req, res) => {
   res.status(200).json({
     status: 'success',
-    message: 'Server is live and running!o',
+    message: 'Server is live and running!p',
   });
 });
 
@@ -92,12 +92,11 @@ async function generateUniqueReferralCode() {
   return code;
 }
 
-// Function to register a user
-async function registerUser(username, password, email, phone_number, referralCode, referrerId) {
+async function registerUser(username, password, email, phone_number, referralCode, referrerId, dateOfBirth) {
   return new Promise((resolve, reject) => {
     db.query(
-      'INSERT INTO users (username, password, balance, email, phone_number, referralCode) VALUES (?, ?, ?, ?, ?, ?)',
-      [username, password, 200, email, phone_number, referralCode],
+      'INSERT INTO users (username, password, balance, email, phone_number, referralCode, date_of_birth) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [username, password, 200, email, phone_number, referralCode, dateOfBirth],
       (err, insertResult) => {
         if (err) {
           console.error('Error registering user:', err.message);
@@ -123,6 +122,40 @@ async function registerUser(username, password, email, phone_number, referralCod
     );
   });
 }
+
+// Reset Password Functionality
+app.post('/reset-password', (req, res) => {
+  const { username, newPassword } = req.body;
+
+  if (!username || !newPassword) {
+    return res.status(400).json({ error: 'Username and new password are required' });
+  }
+
+  // Hash the new password
+  bcrypt.hash(newPassword, 10, (err, hashedPassword) => {
+    if (err) {
+      return res.status(500).json({ error: 'Error hashing the password' });
+    }
+
+    // Update the password
+    db.query(
+      'UPDATE users SET password = ? WHERE username = ?',
+      [hashedPassword, username],
+      (updateErr, result) => {
+        if (updateErr) {
+          console.error('Error updating password:', updateErr.message);
+          return res.status(500).json({ error: 'Error updating password' });
+        }
+
+        if (result.affectedRows === 0) {
+          return res.status(400).json({ error: 'User not found' });
+        }
+
+        return res.status(200).json({ message: 'Password reset successfully' });
+      }
+    );
+  });
+});
 
 // Registration endpoint
 app.post('/register', async (req, res) => {
