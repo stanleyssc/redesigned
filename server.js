@@ -14,7 +14,7 @@ app.use(express.json());
 app.get('/', (req, res) => {
   res.status(200).json({
     status: 'success',
-    message: 'Server is live and running!t',
+    message: 'Server is live and running!u',
   });
 });
 
@@ -92,13 +92,14 @@ async function generateUniqueReferralCode() {
   return code;
 }
 
-async function registerUser(username, password, email, phone_number, referralCode, referrerId, dob) {
+// Function to register a new user
+async function registerUser(username, password, email, phone_number, referralCode, referrerCode, dob) {
   return new Promise((resolve, reject) => {
-    console.log('Registering user with:', { username, email, dob, referralCode, referrerId });
+    console.log('Registering user with:', { username, email, dob, referralCode, referrerCode });
 
     db.query(
-      'INSERT INTO users (username, password, balance, email, phone_number, referralCode, referrerId, date_of_birth) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [username, password, 200, email, phone_number, referralCode, referrerId, dob],
+      'INSERT INTO users (username, password, balance, email, phone_number, referralCode, referrer_code, date_of_birth) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [username, password, 200, email, phone_number, referralCode, referrerCode, dob],
       (err, insertResult) => {
         if (err) {
           console.error('Error registering user:', err.message);
@@ -106,25 +107,69 @@ async function registerUser(username, password, email, phone_number, referralCod
         } else {
           const newUserId = insertResult.insertId;
           console.log('User successfully registered with ID:', newUserId);
-
-          if (referrerId) {
-            db.query(
-              'INSERT INTO user_referrals (referrer_id, referred_id) VALUES (?, ?)',
-              [referrerId, newUserId],
-              (referralErr) => {
-                if (referralErr) {
-                  console.error('Error logging referral:', referralErr.message);
-                }
-              }
-            );
-          }
-
           resolve(newUserId);
         }
       }
     );
   });
 }
+
+// Registration endpoint
+app.post('/register', async (req, res) => {
+  try {
+    const { username, password, email, phone_number, referrerCode, dob } = req.body;
+
+    // Validate input
+    if (!username || !password || (!email && !phone_number)) {
+      return res.status(400).json({
+        error: 'Username, password, and either email or phone number are required',
+      });
+    }
+
+    // Ensure dob is in the correct format
+    const formattedDob = dob ? new Date(dob).toISOString().split('T')[0] : null;
+
+    // Generate a unique referral code for the user
+    const referralCode = await generateUniqueReferralCode();
+
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Validate referral code if provided
+    let referrerId = null;
+    if (referrerCode) {
+      const referrerResult = await new Promise((resolve, reject) => {
+        db.query(
+          'SELECT referralCode FROM users WHERE referralCode = ?',
+          [referrerCode],
+          (err, result) => {
+            if (err) reject(err);
+            resolve(result);
+          }
+        );
+      });
+
+      if (!referrerResult || referrerResult.length === 0) {
+        return res.status(400).json({ error: 'Invalid referral code' });
+      }
+
+      referrerId = referrerCode; // Use the valid referralCode as referrer_code
+    }
+
+    // Register the user
+    const newUserId = await registerUser(username, hashedPassword, email, phone_number, referralCode, referrerId, formattedDob);
+
+    // Generate token for the new user
+    const token = jwt.sign({ userId: newUserId }, 'your_secret_key', { expiresIn: '7d' });
+
+    return res.status(201).json({ message: 'User registered successfully', token });
+  } catch (err) {
+    console.error('Error during registration:', err.message);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+module.exports = app;
 
 // Reset Password Functionality
 app.post('/reset-password', (req, res) => {
@@ -159,62 +204,6 @@ app.post('/reset-password', (req, res) => {
     );
   });
 });
-
-app.post('/register', async (req, res) => {
-  try {
-    const { username, password, email, phone_number, referrerCode, dob } = req.body;
-
-    // Validate input
-    if (!username || !password || (!email && !phone_number)) {
-      return res.status(400).json({
-        error: 'Username, password, and either email or phone number are required',
-      });
-    }
-
-    // Ensure dob is in correct format
-    const formattedDob = dob ? new Date(dob).toISOString().split('T')[0] : null;
-
-    // Generate a unique referral code
-    const referralCode = await generateUniqueReferralCode();
-
-    // Hash the password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Validate referral code if provided
-    let referrerId = null;
-    if (referrerCode) {
-      const referrerResult = await new Promise((resolve, reject) => {
-        db.query(
-          'SELECT user_id FROM users WHERE referralCode = ?',
-          [referrerCode],
-          (err, result) => {
-            if (err) reject(err);
-            resolve(result);
-          }
-        );
-      });
-
-      if (!referrerResult || referrerResult.length === 0) {
-        return res.status(400).json({ error: 'Invalid referral code' });
-      }
-
-      referrerId = referrerResult[0].user_id;
-    }
-
-    // Register the user
-    const newUserId = await registerUser(username, hashedPassword, email, phone_number, referralCode, referrerId, formattedDob);
-
-    // Generate token for the new user
-    const token = jwt.sign({ userId: newUserId }, 'your_secret_key', { expiresIn: '7d' });
-
-    return res.status(201).json({ message: 'User registered successfully', token });
-  } catch (err) {
-    console.error('Error during registration:', err.message);
-    return res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-module.exports = app;
 
 //Login endpoint
 app.post('/login', (req, res) => {
