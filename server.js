@@ -14,7 +14,7 @@ app.use(express.json());
 app.get('/', (req, res) => {
   res.status(200).json({
     status: 'success',
-    message: 'Server is live and running!w',
+    message: 'Server is live and running!x',
   });
 });
 
@@ -179,6 +179,9 @@ app.post('/reset-password', (req, res) => {
     return res.status(400).json({ error: 'Username, date of birth, and new password are required' });
   }
 
+  // Normalize date format: Ensure dob in the request is in YYYY-MM-DD format
+  const normalizedDob = new Date(dob).toISOString().split('T')[0]; // Format date to YYYY-MM-DD
+
   // Validate the date of birth
   db.query(
     'SELECT user_id, date_of_birth FROM users WHERE username = ?',
@@ -194,7 +197,11 @@ app.post('/reset-password', (req, res) => {
       }
 
       const storedDob = result[0].date_of_birth;
-      if (storedDob !== dob) {
+
+      // Normalize stored DOB as well in case it contains time
+      const normalizedStoredDob = new Date(storedDob).toISOString().split('T')[0];
+
+      if (normalizedStoredDob !== normalizedDob) {
         return res.status(400).json({ error: 'Invalid date of birth' });
       }
 
