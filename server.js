@@ -14,7 +14,7 @@ app.use(express.json());
 app.get('/', (req, res) => {
   res.status(200).json({
     status: 'success',
-    message: 'Server is live and running!x',
+    message: 'Server is live and running!y',
   });
 });
 
@@ -374,7 +374,7 @@ app.get('/user-info', authenticate, (req, res) => {
     const user = result[0];
     res.status(200).json({
       user_id: user.user_id,
-      referral_code: user.referral_code,
+      referralCode: user.referralCode,
       username: user.username,
       email: user.email,
       phone_number: user.phone_number,
@@ -496,7 +496,7 @@ app.put('/update-profile', authenticate, (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    db.query('SELECT user_id, referral_code, username, email, phone_number, bank_name, bank_account_number, account_name FROM users WHERE user_id = ?', [req.user_id], (err, result) => {
+    db.query('SELECT user_id, referralCode, username, email, phone_number, bank_name, bank_account_number, account_name FROM users WHERE user_id = ?', [req.user_id], (err, result) => {
       if (err) {
         console.error('Error fetching updated user data:', err);
         return res.status(500).json({ error: 'Error fetching updated user data' });
@@ -506,7 +506,7 @@ app.put('/update-profile', authenticate, (req, res) => {
       res.status(200).json({
         message: 'Profile updated successfully',
         user_id: updatedUser.user_id,
-        referral_code: updatedUser.referral_code,
+        referralCode: updatedUser.referralCode,
         username: updatedUser.username,
         email: updatedUser.email,
         phone_number: updatedUser.phone_number,
@@ -655,12 +655,12 @@ cron.schedule('0 0 * * *', async () => {
   try {
     // Query to fetch total bets grouped by referral_code
     const query = `
-      SELECT ur.referral_code, SUM(b.amount_bet) AS total_bet
+      SELECT ur.referralCode, SUM(b.amount_bet) AS total_bet
       FROM users u
       JOIN games_outcomes b ON u.user_id = b.user_id
       JOIN user_referrals ur ON ur.user_id = u.user_id
-      WHERE ur.referral_code IS NOT NULL
-      GROUP BY ur.referral_code
+      WHERE ur.referralCode IS NOT NULL
+      GROUP BY ur.referralCode
     `;
 
     db.query(query, (err, results) => {
@@ -673,13 +673,13 @@ cron.schedule('0 0 * * *', async () => {
 
       // Calculate referral bonus for each referral_code
       results.forEach(result => {
-        const { referral_code, total_bet } = result;
+        const { referralCode, total_bet } = result;
 
         const referralBonus = total_bet * bonusPercentage;
 
         // Store the results (total bet and referral bonus) in the cache
-        cache.set(`referral_code:${referral_code}:total_bet`, total_bet);
-        cache.set(`referral_code:${referral_code}:referral_bonus`, referralBonus); 
+        cache.set(`referralCode:${referralCode}:total_bet`, total_bet);
+        cache.set(`referralCode:${referralCode}:referral_bonus`, referralBonus); 
       });
     });
   } catch (error) {
@@ -692,7 +692,7 @@ app.get('/referral/referral-bonus', async (req, res) => {
   const { referral_code } = req.query;
 
   try {
-    const referralBonus = await cache.get(`referral_code:${referral_code}:referral_bonus`);
+    const referralBonus = await cache.get(`referralCode:${referralCode}:referral_bonus`);
 
     if (referralBonus) {
       res.json({ success: true, referralBonus });
