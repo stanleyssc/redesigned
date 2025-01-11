@@ -14,7 +14,7 @@ app.use(express.json());
 app.get('/', (req, res) => {
   res.status(200).json({
     status: 'success',
-    message: 'Server is live and running!q',
+    message: 'Server is live and running!r',
   });
 });
 
@@ -96,7 +96,7 @@ async function registerUser(username, password, email, phone_number, referralCod
   return new Promise((resolve, reject) => {
     db.query(
       'INSERT INTO users (username, password, balance, email, phone_number, referralCode, date_of_birth) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [username, password, 200, email, phone_number, referralCode, dateOfBirth],
+      [username, password, 200, email, phone_number, referralCode, dob],
       (err, insertResult) => {
         if (err) {
           console.error('Error registering user:', err.message);
