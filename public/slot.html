@@ -8,28 +8,102 @@
   <script type="module" src="https://js-de.sentry-cdn.com/efcedd90866cd0c12c2144245e25eca9.min.js" crossorigin="anonymous"></script>
 </head>
 <body>
-<header class="header">
-  <h1 class="header-logo">
-    <a href="">
-      <img src="nghlogo.png" class="header_img">
-    </a>
-  </h1>
-  <nav class="header__nav">
-    <ul class="header__ul">
-      <li><a href="#" class="links" id="welcome-message">Welcome</a></li>
-      <li><a href="#" class="links" id="landing-page">More Games</a></li>
-      <li class="dropdown">
-        <a href="#" class="links" id="accountSettings">Account Settings</a>
-        <ul class="dropdown-menu" id="accountSettingsDropdown">
-          <li><a href="#" id="profileLink">Profile</a></li>
-          <li><a href="#" id="deposit">Deposit</a></li>
-          <li><a href="#" id="withdrawal">Withdrawal</a></li>
-        </ul>
-      </li>
-      <li><a href="#" class="links" id="logout">Logout</a></li>
-    </ul>
-  </nav>
-</header>
+  <header class="header">
+    <h1 class="header-logo">
+      <a href="">
+        <img src="nghlogo.png" class="header_img">
+      </a>
+    </h1>
+    <nav class="header__nav">
+      <ul class="header__ul" id="navLinks">
+        <!-- Placeholder for dynamic content -->
+      </ul>
+    </nav>
+  </header>
+  
+<!-- Login Modal -->
+<div class="hmodal" id="loginModal" style="display: none;">
+  <div class="hmodal-content">
+    <span class="hclose-modal" id="closeLoginModal">&times;</span>
+    <h1>Log In</h1>
+    
+    <!-- Login Form -->
+    <div id="loginFormContainer">
+      <form id="loginForm">
+        <label for="loginUsername">Username, Email or Phone Number</label>
+        <input type="text" id="loginUsername" placeholder="Enter your username, email, or phone number" required>
+        
+        <label for="loginPassword">Password</label>
+        <input type="password" id="loginPassword" placeholder="Enter your password" required>
+        
+        <button type="submit">Log In</button>
+      </form>
+      <p id="signupText">Don't have an account? <button id="openSignupModal">Sign up here</button>.</p>
+      <p><a id="forgotPasswordLink" href="#">Forgot Password?</a></p>
+      <p id="statusMessage"></p>
+    </div>
+    
+    <!-- Forgot Password Form -->
+    <div id="forgotPasswordFormContainer" style="display: none;">
+      <h2>Reset Password</h2>
+      <form id="forgotPasswordForm">
+        <label for="resetUsername">Username:</label>
+        <input type="text" id="resetUsername" placeholder="Enter your username" required>
+        
+        <label for="resetDOB">Date of Birth:</label>
+        <input type="date" id="resetDOB" required>
+        
+        <label for="newPassword">New Password:</label>
+        <input type="password" id="newPassword" placeholder="Enter your new password" required>
+        
+        <label for="confirmNewPassword">Confirm New Password:</label>
+        <input type="password" id="confirmNewPassword" placeholder="Confirm your new password" required>
+        
+        <button type="submit">Reset Password</button>
+      </form>
+      <p><a id="backToLogin" href="#">Back to Login</a></p>
+    </div>
+  </div>
+</div>
+  
+  <!-- Signup Modal -->
+<div class="hmodal" id="signupModal" style="display: none;">
+  <div class="hmodal-content">
+    <span class="hclose-modal" id="closeSignupModal">&times;</span>
+    <h1>Sign Up</h1>
+    <form id="signupForm">
+      <label for="signupUsername">Username</label>
+      <input type="text" id="signupUsername" placeholder="Create a username" required>
+      
+      <label for="signupPassword">Password</label>
+      <input type="password" id="signupPassword" placeholder="Create a password" required>
+      
+      <label for="confirmSignupPassword">Confirm Password</label>
+      <input type="password" id="confirmSignupPassword" placeholder="Confirm your password" required>
+      
+      <label for="signupEmail">Email</label>
+      <input type="email" id="signupEmail" placeholder="Enter your email">
+      
+      <label for="signupPhoneNumber">Phone Number</label>
+      <input type="text" id="signupPhoneNumber" placeholder="Enter your phone number">
+      
+      <label for="signupDob">Date of Birth</label>
+      <input type="date" id="signupDob" required>
+      
+      <button type="submit">Sign Up</button>
+    </form>
+    <p id="loginText">Already have an account? <button id="openLoginModal">Log in here</button>.</p>
+    <p id="signupStatusMessage"></p>
+  </div>
+</div>
+
+<!-- Success Modal -->
+<div class="hmodal" id="successModal" style="display: none;">
+  <div class="hmodal-content">
+    <h2>Signup Successful!</h2>
+    <p>Redirecting you to the homepage...</p>
+  </div>
+</div>  
 
 <!-- Profile Update Modal -->
 <div class="modal" id="updateProfileModal" style="display: none;">
@@ -221,6 +295,6 @@
 </div>
 
 </div>
-<script src="slot-obfuscated.js" defer></script>
+<script src="slot.js" defer></script>
 </body>
 </html>
