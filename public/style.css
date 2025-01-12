@@ -92,7 +92,7 @@ body {
 }
 
 .bet-button.active {
-  background-color: #7b1020;
+  background-color: #93192c;
   color: #ffffff;
   box-shadow: 0 0 15px #00ff00, 0 0 30px #00ff00;
   font-weight: bold;
@@ -399,12 +399,155 @@ body {
   transform: translateY(0);
 }
 
-/* Modal Styles */
+/* Modal Overlay for Login and Signup (hmodal) */
+.hmodal {
+  display: none;
+  position: fixed;
+  z-index: 10;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Modal Content for Login and Signup (hmodal-content) */
+.hmodal-content {
+  background-color: #ffffff;
+  padding: 30px;
+  border-radius: 12px;
+  width: 400px;
+  max-width: 90%;
+  text-align: center;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  position: relative;
+  animation: fadeIn 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  height: auto;
+}
+
+#loginFormContainer {
+  display: block;
+  width: 100%;
+} 
+
+/* Close Button for Login and Signup */
+.hclose-modal {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  font-size: 20px;
+  font-weight: bold;
+  color: #333;
+  cursor: pointer;
+}
+
+.hclose-modal:hover {
+  color: #ff5252;
+}
+
+/* Form Labels for Login and Signup */
+form label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 600;
+  font-size: 14px;
+  color: #555;
+  text-align: left;
+}
+
+/* Input Fields for Login and Signup */
+form input[type="text"],
+form input[type="password"],
+form input[type="email"],
+form input[type="date"] { 
+  width: 100%;
+  padding: 10px 15px;
+  margin-bottom: 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  transition: border 0.3s ease;
+}
+
+/* Focused state for inputs (Login and Signup) */
+form input:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+}
+
+/* Buttons for Login and Signup */
+button {
+  display: inline-block;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: bold;
+  color: #fff;
+  background-color: #6c2505;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  outline: none;
+}
+
+button:hover {
+  background-color: #200d01;
+  transform: translateY(-2px);
+}
+
+button:active {
+  transform: translateY(1px);
+}
+
+/* Text Links for Login and Signup */
+p button {
+  background: none;
+  color: #007bff;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+
+p button:hover {
+  color: #0056b3;
+  text-decoration: none;
+}
+
+/* Status Message for Login and Signup */
+#statusMessage {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #ff5252;
+}
+
+/* Animations for Login and Signup */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Modal Styles for Navbars (modal) */
 .modal {
   display: none;
   position: fixed;
-  top: 110px;
-  left: 20%;
+  top: 0px;
+  left: 0%;
   width: 70%;
   height: calc(100% - 110px);
   justify-content: center;
@@ -413,6 +556,7 @@ body {
   opacity: 100%;
 }
 
+/* Modal Content for Navbar Modals (modal-content) */
 .modal-content {
   background: #ffffff;
   padding: 25px;
@@ -426,6 +570,7 @@ body {
   animation: slideIn 0.3s ease;
 }
 
+/* Slide-in Animation for Navbar Modals */
 @keyframes slideIn {
   from {
     transform: translateY(-50px);
@@ -437,6 +582,7 @@ body {
   }
 }
 
+/* Close Button for Navbar Modals */
 .close {
   position: absolute;
   top: 15px;
@@ -453,6 +599,7 @@ body {
   color: #000000;
 }
 
+/* Form and Input Styling for Navbar Modals */
 form {
   display: flex;
   flex-direction: column;
@@ -475,15 +622,17 @@ input[type="email"] {
   transition: border-color 0.3s ease;
 }
 
+/* Focused Input State for Navbar Modals */
 input[type="text"]:focus,
 input[type="email"]:focus {
   border-color: #007BFF;
   box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
 }
 
+
 button {
   padding: 12px 20px;
-  background-color: #007BFF;
+  background-color: #070100;
   color: #ffffff;
   border: none;
   border-radius: 8px;
@@ -681,65 +830,95 @@ h3 {
   margin: auto;
 }
 
-.header_img {
-  height: 60px;
-  width: auto;
-  margin: 0;
-  display: block;
-  padding: 0;
-}
-
 .header {
   display: flex;
-  margin: 0rem;
-  padding: 0.5rem;
-  background-color: hsla(84, 81%, 6%, 0.5);
   justify-content: space-between;
   align-items: center;
-  padding-block: 0.8rem;
-  padding-inline: 3 rem;
+  background-color: hsla(84, 81%, 6%, 0.5);
+  padding: 0.8rem 3rem;
   column-gap: 1rem;
   row-gap: 1rem;
+  border-bottom: 2px solid hsla(150, 35%, 70%, 0.5);
 }
 
 .header__ul {
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: stretch;
-  text-decoration: none;
+  justify-content: flex-start;
+  align-items: center;
   list-style: none;
-  gap: 1.5rem;
   margin: 0;
   padding: 0;
+  gap: 2rem;
 }
 
 .links {
   color: hsl(150, 35%, 70%);
   text-decoration: none;
-  transition: color 0.2s ease-in;
-  background-color: hsl(84deg 81% 6% / 60%);
-  padding-inline:3px;
-  padding-block: 8px;
-  border-radius: 0.5rem;
-  font-size: 0.9rem;
-  display: block;
+  padding: 8px 16px;
+  border-radius: 5px;
+  font-size: 1rem;
+  font-weight: 600;
+  display: inline-block;
+  transition: all 0.3s ease;
 }
 
 .links:hover {
-  color: hsl(150, 35%, 95%);;
-  font-weight: bolder;
+  color: white;
+  background-color: hsl(150, 35%, 50%);
+  transform: translateY(-2px);
+  font-weight: 700;
 }
 
-body {
-font-family: 'Montserrat', sans-serif;
-margin: 0;
-padding: 0;    
+.dropdown-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background-color: hsl(150, 35%, 80%);
+  border-radius: 5px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  min-width: 200px;
+}
+
+.dropdown:hover .dropdown-menu {
+  display: block;
+}
+
+.dropdown-menu li {
+  padding: 10px;
+}
+
+.dropdown-menu li a {
+  color: hsl(150, 35%, 20%);
+  text-decoration: none;
+  padding: 8px 16px;
+  display: block;
+}
+
+.dropdown-menu li a:hover {
+  background-color: hsl(150, 35%, 60%);
+  color: white;
+  font-weight: 600;
 }
 
 .header-logo {
-margin-block-start: 0em;
-margin-block-end: 0em;
+  margin: 0;
+}
+
+.header_img {
+  height: 60px;
+  width: auto;
+  padding: 0;
+}
+
+body {
+  font-family: 'Montserrat', sans-serif;
+  margin: 0;
+  padding: 0;
 }
 
 .modal-overlay {
@@ -767,17 +946,107 @@ margin-block-end: 0em;
   text-align: center;
 }
 
-button {
-  background-color: #007bff;
-  color: white;
-  padding: 10px 20px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
 button:hover {
   background-color: #0056b3;
+}
+
+/* Modal Styling */
+#forgotPasswordFormContainer {
+  display: flex; /* Flexbox layout */
+  justify-content: center; /* Center content horizontally */
+  align-items: center; /* Center content vertically */
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+#forgotPasswordForm h2 {
+  font-size: 1.8rem;
+  margin-bottom: 20px;
+  color: #333;
+  font-weight: bold;
+}
+
+#forgotPasswordForm {
+  background-color: #ebe6e6;
+  border-radius: 8px;
+  padding: 30px;
+  width: 100%;
+  max-width: 500px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+#forgotPasswordForm label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #555;
+}
+
+#forgotPasswordForm input {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 15px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+#forgotPasswordForm input:focus {
+  outline: none;
+  border-color: #0066cc;
+  box-shadow: 0 0 4px rgba(0, 102, 204, 0.4);
+}
+
+#forgotPasswordForm button {
+  width: 100%;
+  padding: 12px;
+  background-color: #0066cc;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+#forgotPasswordForm button:hover {
+  background-color: #005bb5;
+}
+
+#forgotPasswordForm p {
+  text-align: center;
+  margin-top: 15px;
+}
+
+#forgotPasswordForm a {
+  color: #0066cc;
+  text-decoration: none;
+}
+
+#forgotPasswordForm a:hover {
+  text-decoration: underline;
+}
+
+#backToLogin {
+  display: block;
+  text-align: center;
+  color: #0066cc;
+  font-size: 1rem;
+  margin-top: 20px;
+  text-decoration: none;
+}
+
+#backToLogin:hover {
+  text-decoration: underline;
 }
 
 
