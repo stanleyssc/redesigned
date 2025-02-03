@@ -14,7 +14,7 @@ app.use(express.json());
 app.get('/', (req, res) => {
   res.status(200).json({
     status: 'success',
-    message: 'Server is live and running!z',
+    message: 'Server is live and running!aa',
   });
 });
 
@@ -91,6 +91,32 @@ async function generateUniqueReferralCode() {
 
   return code;
 }
+
+// Endpoint to save game outcome
+app.post('/save-game-outcome', authenticate, async (req, res) => {
+    const { start_time, end_time, table_name, winner, winner_amount, rake, card_totals } = req.body;
+
+    if (!start_time || !end_time || !table_name || !winner || !winner_amount || !rake || !card_totals) {
+        return res.status(400).json({ error: 'All fields are required' });
+    }
+
+    const query = `
+        INSERT INTO whot_game_outcomes (start_time, end_time, table_name, winner, winner_amount, rake, card_totals)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    db.query(
+        query,
+        [start_time, end_time, table_name, winner, winner_amount, rake, JSON.stringify(card_totals)],
+        (err, result) => {
+            if (err) {
+                console.error('Error saving game outcome:', err);
+                return res.status(500).json({ error: 'Failed to save game outcome' });
+            }
+            res.status(200).json({ message: 'Game outcome saved successfully', id: result.insertId });
+        }
+    );
+});
 
 // Endpoint to save game outcome
 app.post('/save-game-outcome', authenticate, async (req, res) => {
