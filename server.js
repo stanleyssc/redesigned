@@ -14,7 +14,7 @@ app.use(express.json());
 app.get('/', (req, res) => {
   res.status(200).json({
     status: 'success',
-    message: 'Server is live and running!ab',
+    message: 'Server is live and running!ac',
   });
 });
 
@@ -26,6 +26,9 @@ const db = mysql.createPool({
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
 });
+
+const serverToken = generateToken('server'); // Use a fixed user_id like 'server'
+console.log('Server Token:', serverToken);
 
 // 2. Database Connection Retry Logic
 db.on('error', (err) => {
@@ -63,8 +66,7 @@ app.use(cors({
 const generateToken = (userId) => {
   return jwt.sign(
     { user_id: userId },
-    process.env.JWT_SECRET,
-    { expiresIn: '24h' }
+    process.env.JWT_SECRET
   );
 };
 
@@ -93,8 +95,14 @@ async function generateUniqueReferralCode() {
 }
 
 // Endpoint to save WHOT game outcome
-app.post('/save-game-outcome', authenticate, async (req, res) => {
+app.post('/save-game-outcome', (req, res) => {
     const { start_time, end_time, table_name, winner, winner_amount, rake, card_totals } = req.body;
+    const token = req.headers['authorization'];
+
+    // Validate the server token
+    if (token !== serverToken) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
 
     if (!start_time || !end_time || !table_name || !winner || !winner_amount || !rake || !card_totals) {
         return res.status(400).json({ error: 'All fields are required' });
