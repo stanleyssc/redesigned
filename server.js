@@ -14,7 +14,7 @@ app.use(express.json());
 app.get('/', (req, res) => {
   res.status(200).json({
     status: 'success',
-    message: 'Server is live and running!aa',
+    message: 'Server is live and running!ab',
   });
 });
 
@@ -92,7 +92,7 @@ async function generateUniqueReferralCode() {
   return code;
 }
 
-// Endpoint to save game outcome
+// Endpoint to save WHOT game outcome
 app.post('/save-game-outcome', authenticate, async (req, res) => {
     const { start_time, end_time, table_name, winner, winner_amount, rake, card_totals } = req.body;
 
