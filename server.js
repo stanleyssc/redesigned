@@ -10,11 +10,28 @@ require('dotenv').config();
 const app = express();
 app.use(express.json());
 
+// CORS Middleware - Apply it before defining routes
+app.use(cors({
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:4000',
+    'http://127.0.0.1:5500',
+    'http://127.0.0.1:5501',
+    'https://naijagamer.netlify.app',
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true, // Allow cookies/session-based auth if needed
+}));
+
+// Handle CORS Preflight Requests
+app.options('*', cors());
+
 // Homepage endpoint to check if the server is live
 app.get('/', (req, res) => {
   res.status(200).json({
     status: 'success',
-    message: 'Server is live and running!ac',
+    message: 'Server is live and running!ad',
   });
 });
 
