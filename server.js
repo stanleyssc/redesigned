@@ -31,11 +31,11 @@ app.options('*', cors());
 app.get('/', (req, res) => {
   res.status(200).json({
     status: 'success',
-    message: 'Server is live and running!ad',
+    message: 'Server is live and running! ad',
   });
 });
 
-// 1. Database Connection Handling - Using MySQL Connection Pool
+// Database Connection Pool
 const db = mysql.createPool({
   connectionLimit: 50,
   host: process.env.DB_HOST,
@@ -44,15 +44,11 @@ const db = mysql.createPool({
   database: process.env.DB_NAME,
 });
 
-const serverToken = generateToken('server'); // Use a fixed user_id like 'server'
-console.log('Server Token:', serverToken);
-
-// 2. Database Connection Retry Logic
 db.on('error', (err) => {
   console.error('Database error:', err);
 });
 
-// 3. Token Security - Use environment variable for the JWT secret
+// JWT Authentication Middleware
 const authenticate = (req, res, next) => {
   const token = req.headers['authorization'];
   if (!token) {
@@ -68,25 +64,15 @@ const authenticate = (req, res, next) => {
   });
 };
 
-// Middleware
-app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'http://localhost:4000',
-    'http://127.0.0.1:5500',
-    'http://127.0.0.1:5501',
-    'https://naijagamer.netlify.app',
-  ],
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-}));
-
 const generateToken = (userId) => {
   return jwt.sign(
     { user_id: userId },
     process.env.JWT_SECRET
   );
 };
+
+const serverToken = generateToken('server');
+console.log('Server Token:', serverToken);
 
 // Updated Registration Endpoint
 // Generate a unique referral code
