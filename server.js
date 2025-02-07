@@ -31,7 +31,7 @@ app.options('*', cors());
 app.get('/', (req, res) => {
   res.status(200).json({
     status: 'success',
-    message: 'Server is live and running! ad',
+    message: 'Server is live and running! ae',
   });
 });
 
@@ -183,23 +183,14 @@ app.post('/register', async (req, res) => {
   try {
     const { username, password, email, phone_number, referrerCode, dob } = req.body;
 
-    // Validate input
     if (!username || !password || (!email && !phone_number)) {
-      return res.status(400).json({
-        error: 'Username, password, and either email or phone number are required',
-      });
+      return res.status(400).json({ error: 'Username, password, and either email or phone number are required' });
     }
 
-    // Ensure dob is in the correct format
     const formattedDob = dob ? new Date(dob).toISOString().split('T')[0] : null;
-
-    // Generate a unique referral code for the user
     const referralCode = await generateUniqueReferralCode();
-
-    // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Validate referral code if provided
     let referrerId = null;
     if (referrerCode) {
       const referrerResult = await new Promise((resolve, reject) => {
@@ -217,16 +208,35 @@ app.post('/register', async (req, res) => {
         return res.status(400).json({ error: 'Invalid referral code' });
       }
 
-      referrerId = referrerCode; // Use the valid referralCode as referrer_code
+      referrerId = referrerCode;
     }
 
-    // Register the user
     const newUserId = await registerUser(username, hashedPassword, email, phone_number, referralCode, referrerId, formattedDob);
-
-    // Generate token for the new user
     const token = jwt.sign({ userId: newUserId }, 'your_secret_key', { expiresIn: '7d' });
 
-    return res.status(201).json({ message: 'User registered successfully', token });
+    // Fetch newly registered user data
+    db.query('SELECT * FROM users WHERE user_id = ?', [newUserId], (err, result) => {
+      if (err || result.length === 0) {
+        return res.status(500).json({ error: 'Error retrieving user data' });
+      }
+
+      const user = result[0];
+      res.status(201).json({
+        message: 'User registered successfully',
+        token,
+        user: {
+          user_id: user.user_id,
+          referralCode: user.referralCode,
+          username: user.username,
+          email: user.email,
+          phone_number: user.phone_number,
+          bank_name: user.bank_name,
+          bank_account_number: user.bank_account_number,
+          account_name: user.account_name,
+          balance: user.balance
+        }
+      });
+    });
   } catch (err) {
     console.error('Error during registration:', err.message);
     return res.status(500).json({ error: 'Internal server error' });
@@ -302,7 +312,6 @@ app.post('/reset-password', (req, res) => {
 });
 
 
-//Login endpoint
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
 
@@ -322,22 +331,28 @@ app.post('/login', (req, res) => {
         return res.status(400).json({ error: 'Invalid username or password' });
       }
 
-      // Update the last_seen field
-      db.query(
-        'UPDATE users SET last_seen = ? WHERE user_id = ?',
-        [new Date(), user.user_id],
-        (updateErr) => {
-          if (updateErr) {
-            console.error('Error updating last seen:', updateErr);
-          }
+      // Update last_seen timestamp
+      db.query('UPDATE users SET last_seen = ? WHERE user_id = ?', [new Date(), user.user_id], (updateErr) => {
+        if (updateErr) {
+          console.error('Error updating last seen:', updateErr);
         }
-      );
+      });
 
       const token = generateToken(user.user_id);
-      
+
       res.status(200).json({
         token,
-        username: user.username,
+        user: {
+          user_id: user.user_id,
+          referralCode: user.referralCode,
+          username: user.username,
+          email: user.email,
+          phone_number: user.phone_number,
+          bank_name: user.bank_name,
+          bank_account_number: user.bank_account_number,
+          account_name: user.account_name,
+          balance: user.balance
+        }
       });
     });
   });
