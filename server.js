@@ -76,7 +76,7 @@ console.log('Server Token:', serverToken);
 
 // Endpoint to fetch user details
 app.get('/user', authenticate, (req, res) => {
-  db.query('SELECT user_id, username, balance FROM users WHERE user_id = ?', [req.user_id], (err, result) => {
+  db.query('SELECT username, balance FROM users WHERE user_id = ?', [req.user_id], (err, result) => {
     if (err || result.length === 0) {
       console.error('Error fetching user details or user not found:', err);
       return res.status(500).json({ error: 'Error fetching user details' });
