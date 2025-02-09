@@ -31,7 +31,7 @@ app.options('*', cors());
 app.get('/', (req, res) => {
   res.status(200).json({
     status: 'success',
-    message: 'Server is live and running! ai',
+    message: 'Server is live and running! aj',
   });
 });
 
@@ -122,19 +122,19 @@ app.post('/save-game-outcome', async (req, res) => {
     rake
   } = req.body;
 
-  if (
-    startTime === undefined ||
-    endTime === undefined ||
-    !roomId ||
-    winnerId === undefined ||
-    !winnerName ||
-    winnings === undefined ||
-    rake === undefined ||
-    !playerTotals
-  ) {
-    console.error("Validation error:", { startTime, endTime, roomId, winnerId, winnerName, winnings, rake, playerTotals });
-    return res.status(400).json({ error: 'All fields are required' });
-  }
+  // if (
+  //   startTime === undefined ||
+  //   endTime === undefined ||
+  //   !roomId ||
+  //   winnerId === undefined ||
+  //   !winnerName ||
+  //   winnings === undefined ||
+  //   rake === undefined ||
+  //   !playerTotals
+  // ) {
+  //   console.error("Validation error:", { startTime, endTime, roomId, winnerId, winnerName, winnings, rake, playerTotals });
+  //   return res.status(400).json({ error: 'All fields are required' });
+  // }
 
   const query = `
     INSERT INTO whot_game_outcomes (
