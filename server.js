@@ -367,19 +367,32 @@ app.post('/login', (req, res) => {
   });
 });
 
-// Server-to-server endpoint: Update user balance by username without authentication
-app.post('/server-balance', (req, res) => {
-  const { username, balance } = req.body;
-
-  // Validate that username is provided and balance is a valid number
-  if (!username || balance === undefined || isNaN(balance)) {
-    return res.status(400).json({ error: 'Valid username and balance required' });
-  }
-
-  db.query(
-    'UPDATE users SET balance = ? WHERE username = ?',
-    [balance, username],
-    (err, result) => {
+// Combined GET and POST endpoint for server-to-server balance operations
+app.route('/server-balance')
+  // GET: Fetch user balance by username
+  .get((req, res) => {
+    const { username } = req.query;
+    if (!username) {
+      return res.status(400).json({ error: 'Username is required' });
+    }
+    db.query('SELECT balance FROM users WHERE username = ?', [username], (err, result) => {
+      if (err) {
+        console.error('Error fetching balance for username:', username, err);
+        return res.status(500).json({ error: 'Error fetching balance' });
+      }
+      if (result.length === 0) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      res.status(200).json({ balance: result[0].balance });
+    });
+  })
+  // POST: Update user balance by username
+  .post((req, res) => {
+    const { username, balance } = req.body;
+    if (!username || balance === undefined || isNaN(balance)) {
+      return res.status(400).json({ error: 'Valid username and balance required' });
+    }
+    db.query('UPDATE users SET balance = ? WHERE username = ?', [balance, username], (err, result) => {
       if (err) {
         console.error('Error updating balance for username:', username, err);
         return res.status(500).json({ error: 'Error updating balance' });
@@ -388,9 +401,9 @@ app.post('/server-balance', (req, res) => {
         return res.status(404).json({ error: 'User not found' });
       }
       res.status(200).json({ message: 'Balance updated successfully' });
-    }
-  );
-});
+    });
+  });
+
 
 // Get and update user balance
 app.route('/balance')
