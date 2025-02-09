@@ -31,7 +31,7 @@ app.options('*', cors());
 app.get('/', (req, res) => {
   res.status(200).json({
     status: 'success',
-    message: 'Server is live and running! ag',
+    message: 'Server is live and running! ah',
   });
 });
 
@@ -609,63 +609,6 @@ app.put('/update-profile', authenticate, (req, res) => {
 });
 
 
-const redis = require('redis');
-
-// Extract credentials and host information from the Redis URL
-const redisUrl = process.env.REDIS_URL || 'redis://red-ctpeidjqf0us73ebbcp0:6379'; // Use your Redis URL
-const redisClient = redis.createClient({
-  url: redisUrl,
-});
-
-// Event listeners for Redis connection
-redisClient.on('connect', () => {
-  console.log('Connected to Redis');
-});
-
-redisClient.on('ready', () => {
-  console.log('Redis client is ready');
-});
-
-redisClient.on('error', (err) => {
-  console.error('Redis client error:', err);
-});
-
-// Graceful shutdown of Redis
-process.on('SIGINT', async () => {
-  console.log('Gracefully shutting down Redis client');
-  await redisClient.quit();
-  process.exit();
-});
-
-// Connect to Redis
-(async () => {
-  try {
-    await redisClient.connect();
-    console.log('Redis connection established');
-  } catch (error) {
-    console.error('Error connecting to Redis:', error);
-  }
-})();
-
-// Cache functions
-const getCachedBountyPrize = async () => {
-  try {
-    const data = await redisClient.get('bountyPrize');
-    return data ? JSON.parse(data) : null;
-  } catch (error) {
-    console.error('Error fetching cached bounty prize:', error);
-    throw error;
-  }
-};
-
-const cacheBountyPrize = async (prize) => {
-  try {
-    await redisClient.setEx('bountyPrize', 180, JSON.stringify(prize)); // Updated to `setEx` method
-    console.log('Bounty prize cached successfully');
-  } catch (error) {
-    console.error('Error caching bounty prize:', error);
-  }
-};
 
 // Bounty prize route
 app.get('/bounty-jackpot', async (req, res) => {
@@ -673,12 +616,6 @@ app.get('/bounty-jackpot', async (req, res) => {
     const panelType = req.query.panelType;
     if (!panelType || (panelType !== '3' && panelType !== '4')) {
       return res.status(400).json({ error: 'Invalid panel type. Please use "3" or "4".' });
-    }
-
-    // Check Redis cache for the bounty prize
-    const cachedPrize = await getCachedBountyPrize();
-    if (cachedPrize) {
-      return res.status(200).json({ bountyPrize: cachedPrize });
     }
 
     // If no cached prize, calculate it from the database
