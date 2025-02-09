@@ -109,7 +109,6 @@ async function generateUniqueReferralCode() {
   return code;
 }
 
-// Endpoint to save game outcome
 app.post('/save-game-outcome', async (req, res) => {
     const {
         roomId,
@@ -123,24 +122,23 @@ app.post('/save-game-outcome', async (req, res) => {
         tableName,
     } = req.body;
 
-    // Validate required fields
+    // Validate required fields using explicit checks for undefined
     if (
-        !roomId ||
-        !winnerId ||
-        !winnings ||
+        roomId === undefined ||
+        winnerId === undefined ||
+        winnings === undefined ||
         !winnerName ||
         !playerTotals ||
         !startTime ||
         !endTime ||
-        !rake ||
-        !tableName
+        rake === undefined ||
     ) {
         return res.status(400).json({ error: 'All fields are required' });
     }
 
     const query = `
         INSERT INTO whot_game_outcomes (
-            room_id, winner_id, winnings, winner_name, player_totals, start_time, end_time, rake, table_name
+            room_id, winner_id, winnings, winner_name, player_totals, start_time, end_time, rake
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
@@ -155,7 +153,6 @@ app.post('/save-game-outcome', async (req, res) => {
             startTime,
             endTime,
             rake,
-            tableName,
         ],
         (err, result) => {
             if (err) {
@@ -166,6 +163,7 @@ app.post('/save-game-outcome', async (req, res) => {
         }
     );
 });
+
 
 // Function to register a new user
 async function registerUser(username, password, email, phone_number, referralCode, referrerCode, dob) {
