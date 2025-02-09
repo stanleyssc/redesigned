@@ -31,7 +31,7 @@ app.options('*', cors());
 app.get('/', (req, res) => {
   res.status(200).json({
     status: 'success',
-    message: 'Server is live and running! af',
+    message: 'Server is live and running! ag',
   });
 });
 
@@ -793,6 +793,76 @@ app.get('/referral/referral-bonus', async (req, res) => {
     console.error('Error fetching referral bonus:', error);
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
+});
+
+app.post('/deposit', authenticate, (req, res) => {
+    const { user_id, username, balance } = req.user; // Extract user info from the token
+    const { amount } = req.body;
+
+    // Insert deposit request into the database
+    const query = `
+        INSERT INTO deposit_requests (user_id, username, balance, amount, status)
+        VALUES (?, ?, ?, ?, 'pending')
+    `;
+    db.query(query, [user_id, username, balance, amount], (err, result) => {
+        if (err) {
+            console.error('Error inserting deposit request:', err);
+            return res.status(500).json({ error: 'Error submitting deposit request' });
+        }
+        res.status(200).json({ message: 'Deposit request submitted successfully' });
+    });
+});
+
+app.post('/withdraw', authenticate, (req, res) => {
+    const { amount } = req.body;
+    const userId = req.user_id; // Extracted from the token
+
+    // Fetch user balance and account details
+    db.query('SELECT balance, bank_name, bank_account_number, account_name FROM users WHERE user_id = ?', [userId], (err, result) => {
+        if (err) {
+            console.error('Error fetching user data:', err);
+            return res.status(500).json({ error: 'Error fetching user data' });
+        }
+
+        if (result.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const user = result[0];
+        const balance = parseFloat(user.balance);
+
+        // Validate withdrawal amount
+        if (amount > balance) {
+            return res.status(400).json({ error: 'Insufficient balance' });
+        }
+
+        if (amount < 1000) {
+            return res.status(400).json({ error: 'Minimum withdrawal is ₦1000' });
+        }
+
+        // Insert withdrawal request into the database
+        const query = `
+            INSERT INTO withdrawal_requests (user_id, username, balance, amount, bank_name, bank_account_number, account_name, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')
+        `;
+        db.query(query, [userId, user.username, balance, amount, user.bank_name, user.bank_account_number, user.account_name], (err, result) => {
+            if (err) {
+                console.error('Error inserting withdrawal request:', err);
+                return res.status(500).json({ error: 'Error submitting withdrawal request' });
+            }
+
+            // Deduct the withdrawal amount from the user's balance
+            const newBalance = balance - amount;
+            db.query('UPDATE users SET balance = ? WHERE user_id = ?', [newBalance, userId], (err, result) => {
+                if (err) {
+                    console.error('Error updating user balance:', err);
+                    return res.status(500).json({ error: 'Error updating user balance' });
+                }
+
+                res.status(200).json({ message: 'Withdrawal request submitted successfully', newBalance });
+            });
+        });
+    });
 });
 
 const PORT = process.env.PORT || 3000;
