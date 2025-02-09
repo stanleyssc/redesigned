@@ -369,6 +369,30 @@ app.post('/login', (req, res) => {
   });
 });
 
+// Server-to-server endpoint: Update user balance by username without authentication
+app.post('/server/balance/by-username', (req, res) => {
+  const { username, balance } = req.body;
+
+  // Validate that username is provided and balance is a valid number
+  if (!username || balance === undefined || isNaN(balance)) {
+    return res.status(400).json({ error: 'Valid username and balance required' });
+  }
+
+  db.query(
+    'UPDATE users SET balance = ? WHERE username = ?',
+    [balance, username],
+    (err, result) => {
+      if (err) {
+        console.error('Error updating balance for username:', username, err);
+        return res.status(500).json({ error: 'Error updating balance' });
+      }
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      res.status(200).json({ message: 'Balance updated successfully' });
+    }
+  );
+});
 
 // Get and update user balance
 app.route('/balance')
