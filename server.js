@@ -795,6 +795,7 @@ app.get('/referral/referral-bonus', async (req, res) => {
   }
 });
 
+
 app.post('/deposit', authenticate, (req, res) => {
     const { user_id, username, balance } = req.user; // Extract user info from the token
     const { amount } = req.body;
