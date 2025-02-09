@@ -31,7 +31,7 @@ app.options('*', cors());
 app.get('/', (req, res) => {
   res.status(200).json({
     status: 'success',
-    message: 'Server is live and running! ah',
+    message: 'Server is live and running! ai',
   });
 });
 
@@ -110,58 +110,58 @@ async function generateUniqueReferralCode() {
 }
 
 app.post('/save-game-outcome', async (req, res) => {
-    const {
-        roomId,
-        winnerId,
-        winnings,
-        winnerName,
-        playerTotals,
-        startTime,
-        endTime,
-        rake,
-        tableName,
-    } = req.body;
+  console.log("Received payload:", req.body);
+  const {
+    roomId,
+    winnerId,
+    winnings,
+    winnerName,
+    playerTotals,
+    startTime,
+    endTime,
+    rake
+  } = req.body;
 
-    // Validate required fields using explicit checks for undefined
-    if (
-        roomId === undefined ||
-        winnerId === undefined ||
-        winnings === undefined ||
-        !winnerName ||
-        !playerTotals ||
-        !startTime ||
-        !endTime ||
-        rake === undefined ||
-    ) {
-        return res.status(400).json({ error: 'All fields are required' });
+  if (
+    startTime === undefined ||
+    endTime === undefined ||
+    !roomId ||
+    winnerId === undefined ||
+    !winnerName ||
+    winnings === undefined ||
+    rake === undefined ||
+    !playerTotals
+  ) {
+    console.error("Validation error:", { startTime, endTime, roomId, winnerId, winnerName, winnings, rake, playerTotals });
+    return res.status(400).json({ error: 'All fields are required' });
+  }
+
+  const query = `
+    INSERT INTO whot_game_outcomes (
+      start_time, end_time, table_name, winner_id, winner, winner_amount, rake, card_totals, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
+  `;
+  
+  db.query(
+    query,
+    [
+      startTime,
+      endTime,
+      roomId,
+      winnerId,
+      winnerName,
+      winnings,
+      rake,
+      JSON.stringify(playerTotals)
+    ],
+    (err, result) => {
+      if (err) {
+        console.error("Error saving game outcome:", err);
+        return res.status(500).json({ error: 'Failed to save game outcome' });
+      }
+      res.status(200).json({ message: 'Game outcome saved successfully', id: result.insertId });
     }
-
-    const query = `
-        INSERT INTO whot_game_outcomes (
-            room_id, winner_id, winnings, winner_name, player_totals, start_time, end_time, rake
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `;
-
-    db.query(
-        query,
-        [
-            roomId,
-            winnerId,
-            winnings,
-            winnerName,
-            JSON.stringify(playerTotals),
-            startTime,
-            endTime,
-            rake,
-        ],
-        (err, result) => {
-            if (err) {
-                console.error('Error saving game outcome:', err);
-                return res.status(500).json({ error: 'Failed to save game outcome' });
-            }
-            res.status(200).json({ message: 'Game outcome saved successfully', id: result.insertId });
-        }
-    );
+  );
 });
 
 
