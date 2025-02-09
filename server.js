@@ -112,12 +112,12 @@ async function generateUniqueReferralCode() {
 // Endpoint to save WHOT game outcome
 app.post('/save-game-outcome', (req, res) => {
     const { start_time, end_time, table_name, winner, winner_amount, rake, card_totals } = req.body;
-    const token = req.headers['authorization'];
+    // const token = req.headers['authorization'];
 
-    // Validate the server token
-    if (token !== serverToken) {
-        return res.status(401).json({ error: 'Unauthorized' });
-    }
+    // // Validate the server token
+    // if (token !== serverToken) {
+    //     return res.status(401).json({ error: 'Unauthorized' });
+    // }
 
     if (!start_time || !end_time || !table_name || !winner || !winner_amount || !rake || !card_totals) {
         return res.status(400).json({ error: 'All fields are required' });
