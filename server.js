@@ -370,7 +370,7 @@ app.post('/login', (req, res) => {
 });
 
 // Server-to-server endpoint: Update user balance by username without authentication
-app.post('/server/balance/by-username', (req, res) => {
+app.post('/server-balance', (req, res) => {
   const { username, balance } = req.body;
 
   // Validate that username is provided and balance is a valid number
