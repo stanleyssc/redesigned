@@ -18,6 +18,7 @@ app.use(cors({
     'http://127.0.0.1:5500',
     'http://127.0.0.1:5501',
     'https://naijagamer.netlify.app',
+    'https://naijagamers.netlify.app',
   ],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -31,7 +32,7 @@ app.options('*', cors());
 app.get('/', (req, res) => {
   res.status(200).json({
     status: 'success',
-    message: 'Server is live and running! aj',
+    message: 'Server is live and running! ak',
   });
 });
 
