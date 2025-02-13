@@ -10,22 +10,16 @@ require('dotenv').config();
 const app = express();
 app.use(express.json());
 
-// CORS Middleware - Apply it before defining routes
 app.use(cors({
   origin: [
-    'http://localhost:3000',
-    'http://localhost:4000',
-    'http://127.0.0.1:5500',
-    'http://127.0.0.1:5501',
-    'https://naijagamer.netlify.app',
-    "http://54.85.217.182",
-    "http://www.naijagamers.com",
-    "https://www.naijagamers.com",
-    "http://naijagamers.com",
-    "https://naijagamers.com",
-    'https://naijagamers.netlify.app',
-    
-  ],
+    'https://www.naijagamers.com',
+    'https://naijagamers.com',
+    'wss://www.naijagamers.com',
+    'wss://naijagamers.com',
+    'https://naijagamer.netlify.app'
+  ]
+}));
+
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true, // Allow cookies/session-based auth if needed
