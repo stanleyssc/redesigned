@@ -17,12 +17,10 @@ app.use(cors({
     'wss://www.naijagamers.com',
     'wss://naijagamers.com',
     'https://naijagamer.netlify.app'
-  ]
-}));
-
+  ],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true, // Allow cookies/session-based auth if needed
+  credentials: true // Allow cookies/session-based auth if needed
 }));
 
 // Handle CORS Preflight Requests
