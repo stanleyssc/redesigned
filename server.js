@@ -13,7 +13,7 @@ app.use(express.json());
 app.use(cors({
   origin: [
     'https://www.naijagamers.com',
-    'https://54.85.217.182:3000',
+    'https://54.85.217.182:4000',
     'https://naijagamers.com',
     'wss://www.naijagamers.com',
     'wss://naijagamers.com',
