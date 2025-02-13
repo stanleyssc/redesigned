@@ -18,6 +18,8 @@ app.use(cors({
     'http://127.0.0.1:5500',
     'http://127.0.0.1:5501',
     'https://naijagamer.netlify.app',
+    "http://54.85.217.182",
+    "http://www.naijagamers.com",
     'https://naijagamers.netlify.app',
   ],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
