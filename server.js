@@ -72,9 +72,6 @@ const generateToken = (userId) => {
   );
 };
 
-const serverToken = generateToken('server');
-console.log('Server Token:', serverToken);
-
 // Endpoint to fetch user details
 app.get('/user', authenticate, (req, res) => {
   db.query('SELECT username, balance FROM users WHERE user_id = ?', [req.user_id], (err, result) => {
