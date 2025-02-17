@@ -717,7 +717,7 @@ cron.schedule('0 0 * * *', async () => {
     const query = `
       SELECT ur.referralCode, SUM(b.amount_bet) AS total_bet
       FROM users u
-      JOIN games_outcomes b ON u.user_id = b.user_id
+      JOIN game_outcomes b ON u.user_id = b.user_id
       JOIN user_referrals ur ON ur.user_id = u.user_id
       WHERE ur.referralCode IS NOT NULL
       GROUP BY ur.referralCode
