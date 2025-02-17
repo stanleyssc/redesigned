@@ -113,6 +113,7 @@ app.post('/save-game-outcome', async (req, res) => {
     roomId,
     winnerId,
     winnings,
+    reason,
     winnerName,
     playerTotals,
     startTime,
@@ -136,8 +137,8 @@ app.post('/save-game-outcome', async (req, res) => {
 
   const query = `
     INSERT INTO whot_game_outcomes (
-      start_time, end_time, table_name, winner_id, winner, winner_amount, rake, card_totals, created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
+      start_time, end_time, table_name, winner_id, winner, winner_amount, rake, card_totals, created_at, reason
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?)
   `;
   
   db.query(
@@ -150,7 +151,8 @@ app.post('/save-game-outcome', async (req, res) => {
       winnerName,
       winnings,
       rake,
-      JSON.stringify(playerTotals)
+      JSON.stringify(playerTotals),
+      reason
     ],
     (err, result) => {
       if (err) {
