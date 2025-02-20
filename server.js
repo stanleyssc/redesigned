@@ -108,7 +108,6 @@ async function generateUniqueReferralCode() {
 }
 
 app.post('/save-game-outcome', async (req, res) => {
-  console.log("Received payload:", req.body);
   const {
     roomId,
     winnerId,
