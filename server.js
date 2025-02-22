@@ -1093,6 +1093,39 @@ app.post('/deposit', authenticate, (req, res) => {
     });
 });
 
+// POST /tournaments (Admin only)
+app.post('/tournaments', authenticateAdmin, (req, res) => {
+    const { name, prize_pool, start_time, max_players, registration_fee } = req.body;
+    if (!name || !prize_pool || !start_time || !max_players || !registration_fee) {
+        return res.status(400).json({ error: 'All fields are required' });
+    }
+
+    db.query(
+        'INSERT INTO tournaments (name, prize_pool, start_time, max_players, registration_fee) VALUES (?, ?, ?, ?, ?)',
+        [name, prize_pool, start_time, max_players, registration_fee],
+        (err, result) => {
+            if (err) return res.status(500).json({ error: 'Database error' });
+            res.status(201).json({ message: 'Tournament created', id: result.insertId });
+        }
+    );
+});
+
+// GET /tournaments (Authenticated users)
+app.get('/tournaments', authenticate, (req, res) => {
+    const user_id = req.user_id;
+    db.query(
+        `SELECT t.*,
+                (SELECT COUNT(*) FROM tournament_registrations WHERE tournament_id = t.id) as registered_players,
+                IF(EXISTS(SELECT 1 FROM tournament_registrations WHERE tournament_id = t.id AND user_id = ?), 1, 0) as is_registered
+         FROM tournaments t`,
+        [user_id],
+        (err, results) => {
+            if (err) return res.status(500).json({ error: 'Database error' });
+            res.json(results);
+        }
+    );
+});
+
 app.post('/withdraw', authenticate, (req, res) => {
     const { amount } = req.body;
     const userId = req.user_id; // Extracted from the token
