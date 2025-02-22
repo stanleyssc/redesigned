@@ -18,8 +18,6 @@ app.use(cors({
     'https://naijagamers.com',
     'wss://www.naijagamers.com',
     'wss://naijagamers.com',
-    "http://127.0.0.1:5501",
-    'https://naijagamer.netlify.app'
   ],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -29,10 +27,7 @@ app.use(cors({
 app.options('*', cors());
 
 const ADMIN_PATH = process.env.ADMIN_PATH || '/admin-panel-xyz123';
-app.use(ADMIN_PATH, (req, res, next) => {
-    console.log(`Admin request: ${req.url}`);
-    next();
-}, express.static(path.join(__dirname, 'public/admin')));
+app.use(ADMIN_PATH, express.static(path.join(__dirname, 'public/admin')));
 
 // JWT Authentication Middleware
 const authenticate = (req, res, next) => {
@@ -149,7 +144,7 @@ app.post('/login', (req, res) => {
 });
 
 // Create Admin Endpoint
-app.post('/create-admin', authenticateAdmin, onlySuperAdmin, async (req, res) => {
+app.post(`${ADMIN_PATH}/create-admin`, authenticateAdmin, onlySuperAdmin, async (req, res) => {
   const { username, password, email, role } = req.body;
 
   if (!username || !password || !email || !['junior_admin', 'senior_admin', 'super_admin'].includes(role)) {
@@ -172,6 +167,35 @@ app.post('/create-admin', authenticateAdmin, onlySuperAdmin, async (req, res) =>
   } catch (err) {
     res.status(500).json({ error: 'Error hashing password' });
   }
+});
+
+// Update Password Endpoint
+app.post(`${ADMIN_PATH}/update-password`, authenticateAdmin, async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ error: 'Current and new password are required' });
+  }
+
+  db.query('SELECT password FROM users WHERE user_id = ?', [req.user_id], async (err, result) => {
+    if (err || result.length === 0) {
+      return res.status(500).json({ error: 'User not found' });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, result[0].password);
+    if (!isMatch) {
+      return res.status(400).json({ error: 'Current password incorrect' });
+    }
+
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+    db.query('UPDATE users SET password = ? WHERE user_id = ?', [hashedNewPassword, req.user_id], (err) => {
+      if (err) {
+        console.error('Error updating password:', err);
+        return res.status(500).json({ error: 'Error updating password' });
+      }
+      res.status(200).json({ success: true, message: 'Password updated successfully' });
+    });
+  });
 });
 
 // Endpoint to fetch user details
