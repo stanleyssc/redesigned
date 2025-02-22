@@ -29,7 +29,10 @@ app.use(cors({
 app.options('*', cors());
 
 const ADMIN_PATH = process.env.ADMIN_PATH || '/admin-panel-xyz123';
-app.use(ADMIN_PATH, express.static(path.join(__dirname, 'public/admin')));
+app.use(ADMIN_PATH, (req, res, next) => {
+    console.log(`Admin request: ${req.url}`);
+    next();
+}, express.static(path.join(__dirname, 'public/admin')));
 
 // Homepage endpoint to check if the server is live
 app.get('/', (req, res) => {
