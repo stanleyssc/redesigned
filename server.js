@@ -5,6 +5,7 @@ const cors = require('cors');
 const { body, validationResult } = require('express-validator');
 const bcrypt = require('bcrypt');
 const cron = require('node-cron');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
@@ -25,11 +26,10 @@ app.use(cors({
   credentials: true // Allow cookies/session-based auth if needed
 }));
 
+app.options('*', cors());
+
 const ADMIN_PATH = process.env.ADMIN_PATH || '/admin-panel-xyz123';
 app.use(ADMIN_PATH, express.static(path.join(__dirname, 'public/admin')));
-
-// Handle CORS Preflight Requests
-app.options('*', cors());
 
 // Homepage endpoint to check if the server is live
 app.get('/', (req, res) => {
