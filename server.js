@@ -32,24 +32,20 @@ app.use(ADMIN_PATH, express.static(path.join(__dirname, 'public/admin')));
 // JWT Authentication Middleware
 const authenticate = (req, res, next) => {
   const token = req.headers['authorization'];
-  if (!token) {
-    return res.status(401).json({ error: 'No token provided' });
-  }
-
+  if (!token) return res.status(401).json({ error: 'No token provided' });
   jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
     if (err) {
+      console.error('Token verification failed:', err.message);
       return res.status(401).json({ error: 'Invalid token' });
     }
     req.user_id = decoded.user_id;
+    console.log('Authenticated user_id:', req.user_id);
     next();
   });
 };
 
 const generateToken = (userId) => {
-  return jwt.sign(
-    { user_id: userId },
-    process.env.JWT_SECRET
-  );
+  return jwt.sign({ user_id: userId }, process.env.JWT_SECRET);
 };
 
 const authenticateAdmin = (req, res, next) => {
@@ -588,11 +584,9 @@ async function registerUser(username, password, email, phone_number, referralCod
 app.post('/register', async (req, res) => {
   try {
     const { username, password, email, phone_number, referrerCode, dob } = req.body;
-
     if (!username || !password || (!email && !phone_number)) {
       return res.status(400).json({ error: 'Username, password, and either email or phone number are required' });
     }
-
     const formattedDob = dob ? new Date(dob).toISOString().split('T')[0] : null;
     const referralCode = await generateUniqueReferralCode();
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -600,32 +594,24 @@ app.post('/register', async (req, res) => {
     let referrerId = null;
     if (referrerCode) {
       const referrerResult = await new Promise((resolve, reject) => {
-        db.query(
-          'SELECT referralCode FROM users WHERE referralCode = ?',
-          [referrerCode],
-          (err, result) => {
-            if (err) reject(err);
-            resolve(result);
-          }
-        );
+        db.query('SELECT referralCode FROM users WHERE referralCode = ?', [referrerCode], (err, result) => {
+          if (err) reject(err);
+          resolve(result);
+        });
       });
-
       if (!referrerResult || referrerResult.length === 0) {
         return res.status(400).json({ error: 'Invalid referral code' });
       }
-
       referrerId = referrerCode;
     }
 
     const newUserId = await registerUser(username, hashedPassword, email, phone_number, referralCode, referrerId, formattedDob);
-    const token = jwt.sign({ userId: newUserId }, 'your_secret_key', { expiresIn: '7d' });
+    const token = jwt.sign({ userId: newUserId }, process.env.JWT_SECRET, { expiresIn: '7d' }); // Updated secret
 
-    // Fetch newly registered user data
     db.query('SELECT * FROM users WHERE user_id = ?', [newUserId], (err, result) => {
       if (err || result.length === 0) {
         return res.status(500).json({ error: 'Error retrieving user data' });
       }
-
       const user = result[0];
       res.status(201).json({
         message: 'User registered successfully',
@@ -651,70 +637,43 @@ app.post('/register', async (req, res) => {
 
 module.exports = app;
 
-// Reset Password Functionality with Date of Birth Validation
+// Reset Password Endpoint (updated secret key)
 app.post('/reset-password', (req, res) => {
   const { username, dob, newPassword } = req.body;
-
   if (!username || !dob || !newPassword) {
     return res.status(400).json({ error: 'Username, date of birth, and new password are required' });
   }
-
-  // Normalize date format: Ensure dob in the request is in YYYY-MM-DD format
-  const normalizedDob = new Date(dob).toISOString().split('T')[0]; // Format date to YYYY-MM-DD
-
-  // Validate the date of birth
-  db.query(
-    'SELECT user_id, date_of_birth FROM users WHERE username = ?',
-    [username],
-    (err, result) => {
-      if (err) {
-        console.error('Error querying database:', err.message);
-        return res.status(500).json({ error: 'Error verifying user information' });
-      }
-
-      if (result.length === 0) {
-        return res.status(400).json({ error: 'User not found' });
-      }
-
-      const storedDob = result[0].date_of_birth;
-
-      // Normalize stored DOB as well in case it contains time
-      const normalizedStoredDob = new Date(storedDob).toISOString().split('T')[0];
-
-      if (normalizedStoredDob !== normalizedDob) {
-        return res.status(400).json({ error: 'Invalid date of birth' });
-      }
-
-      // Hash the new password
-      bcrypt.hash(newPassword, 10, (hashErr, hashedPassword) => {
-        if (hashErr) {
-          return res.status(500).json({ error: 'Error hashing the password' });
-        }
-
-        // Update the password
-        db.query(
-          'UPDATE users SET password = ? WHERE username = ?',
-          [hashedPassword, username],
-          (updateErr, updateResult) => {
-            if (updateErr) {
-              console.error('Error updating password:', updateErr.message);
-              return res.status(500).json({ error: 'Error updating password' });
-            }
-
-            if (updateResult.affectedRows === 0) {
-              return res.status(400).json({ error: 'User not found' });
-            }
-
-            // Generate a new token
-            const newToken = jwt.sign({ userId: result[0].user_id }, 'your_secret_key', { expiresIn: '7d' });
-
-            // Send the new token in the response
-            return res.status(200).json({ message: 'Password reset successfully', token: newToken });
-          }
-        );
-      });
+  const normalizedDob = new Date(dob).toISOString().split('T')[0];
+  db.query('SELECT user_id, date_of_birth FROM users WHERE username = ?', [username], (err, result) => {
+    if (err) {
+      console.error('Error querying database:', err.message);
+      return res.status(500).json({ error: 'Error verifying user information' });
     }
-  );
+    if (result.length === 0) {
+      return res.status(400).json({ error: 'User not found' });
+    }
+    const storedDob = result[0].date_of_birth;
+    const normalizedStoredDob = new Date(storedDob).toISOString().split('T')[0];
+    if (normalizedStoredDob !== normalizedDob) {
+      return res.status(400).json({ error: 'Invalid date of birth' });
+    }
+    bcrypt.hash(newPassword, 10, (hashErr, hashedPassword) => {
+      if (hashErr) {
+        return res.status(500).json({ error: 'Error hashing the password' });
+      }
+      db.query('UPDATE users SET password = ? WHERE username = ?', [hashedPassword, username], (updateErr, updateResult) => {
+        if (updateErr) {
+          console.error('Error updating password:', updateErr.message);
+          return res.status(500).json({ error: 'Error updating password' });
+        }
+        if (updateResult.affectedRows === 0) {
+          return res.status(400).json({ error: 'User not found' });
+        }
+        const newToken = jwt.sign({ userId: result[0].user_id }, process.env.JWT_SECRET, { expiresIn: '7d' }); // Updated secret
+        return res.status(200).json({ message: 'Password reset successfully', token: newToken });
+      });
+    });
+  });
 });
 
 // Combined GET and POST endpoint for server-to-server balance operations
