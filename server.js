@@ -25,6 +25,9 @@ app.use(cors({
   credentials: true // Allow cookies/session-based auth if needed
 }));
 
+const ADMIN_PATH = process.env.ADMIN_PATH || '/admin-panel-xyz123';
+app.use(ADMIN_PATH, express.static(path.join(__dirname, 'public/admin')));
+
 // Handle CORS Preflight Requests
 app.options('*', cors());
 
