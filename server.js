@@ -34,6 +34,25 @@ app.use(ADMIN_PATH, (req, res, next) => {
     next();
 }, express.static(path.join(__dirname, 'public/admin')));
 
+const authenticateAdmin = (req, res, next) => {
+  authenticate(req, res, () => {
+    db.query('SELECT role FROM users WHERE user_id = ?', [req.user_id], (err, result) => {
+      if (err || result.length === 0 || result[0].role === 'user') {
+        return res.status(403).json({ error: 'Unauthorized access' });
+      }
+      req.adminRole = result[0].role;
+      next();
+    });
+  });
+};
+
+const onlySuperAdmin = (req, res, next) => {
+  if (req.adminRole !== 'super_admin') {
+    return res.status(403).json({ error: 'Not Authorised' });
+  }
+  next();
+};
+
 // Homepage endpoint to check if the server is live
 app.get('/', (req, res) => {
   res.status(200).json({
@@ -77,6 +96,31 @@ const generateToken = (userId) => {
     process.env.JWT_SECRET
   );
 };
+
+app.post('/create-admin', authenticateAdmin, onlySuperAdmin, async (req, res) => {
+  const { username, password, email, role } = req.body;
+
+  if (!username || !password || !email || !['junior_admin', 'senior_admin', 'super_admin'].includes(role)) {
+    return res.status(400).json({ error: 'Invalid input' });
+  }
+
+  try {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    db.query(
+      'INSERT INTO users (username, password, balance, email, role) VALUES (?, ?, 0, ?, ?)',
+      [username, hashedPassword, email, role],
+      (err, result) => {
+        if (err) {
+          console.error('Error creating admin:', err);
+          return res.status(500).json({ error: 'Error creating admin' });
+        }
+        res.status(201).json({ success: true, message: 'Admin created', userId: result.insertId });
+      }
+    );
+  } catch (err) {
+    res.status(500).json({ error: 'Error hashing password' });
+  }
+});
 
 // Endpoint to fetch user details
 app.get('/user', authenticate, (req, res) => {
