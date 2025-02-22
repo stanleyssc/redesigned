@@ -34,6 +34,29 @@ app.use(ADMIN_PATH, (req, res, next) => {
     next();
 }, express.static(path.join(__dirname, 'public/admin')));
 
+// JWT Authentication Middleware
+const authenticate = (req, res, next) => {
+  const token = req.headers['authorization'];
+  if (!token) {
+    return res.status(401).json({ error: 'No token provided' });
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+    if (err) {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+    req.user_id = decoded.user_id;
+    next();
+  });
+};
+
+const generateToken = (userId) => {
+  return jwt.sign(
+    { user_id: userId },
+    process.env.JWT_SECRET
+  );
+};
+
 const authenticateAdmin = (req, res, next) => {
   authenticate(req, res, () => {
     db.query('SELECT role FROM users WHERE user_id = ?', [req.user_id], (err, result) => {
@@ -74,29 +97,58 @@ db.on('error', (err) => {
   console.error('Database error:', err);
 });
 
-// JWT Authentication Middleware
-const authenticate = (req, res, next) => {
-  const token = req.headers['authorization'];
-  if (!token) {
-    return res.status(401).json({ error: 'No token provided' });
+// Unified Login Endpoint
+app.post('/login', (req, res) => {
+  const { username, password } = req.body;
+  const isAdminLogin = req.headers['x-login-type'] === 'admin';
+
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Username and password are required' });
   }
 
-  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
-    if (err) {
-      return res.status(401).json({ error: 'Invalid token' });
+  db.query('SELECT * FROM users WHERE username = ?', [username], (err, result) => {
+    if (err || result.length === 0) {
+      console.error('Error finding user or user not found:', err);
+      return res.status(400).json({ error: 'Invalid username or password' });
     }
-    req.user_id = decoded.user_id;
-    next();
+
+    const user = result[0];
+    bcrypt.compare(password, user.password, (err, isMatch) => {
+      if (err || !isMatch) {
+        return res.status(400).json({ error: 'Invalid username or password' });
+      }
+
+      if (isAdminLogin && user.role === 'user') {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
+
+      db.query('UPDATE users SET last_seen = ? WHERE user_id = ?', [new Date(), user.user_id], (updateErr) => {
+        if (updateErr) {
+          console.error('Error updating last seen:', updateErr);
+        }
+      });
+
+      const token = generateToken(user.user_id);
+      res.status(200).json({
+        token,
+        user: {
+          user_id: user.user_id,
+          referralCode: user.referralCode,
+          username: user.username,
+          email: user.email,
+          phone_number: user.phone_number,
+          bank_name: user.bank_name,
+          bank_account_number: user.bank_account_number,
+          account_name: user.account_name,
+          balance: user.balance,
+          role: user.role
+        }
+      });
+    });
   });
-};
+});
 
-const generateToken = (userId) => {
-  return jwt.sign(
-    { user_id: userId },
-    process.env.JWT_SECRET
-  );
-};
-
+// Create Admin Endpoint
 app.post('/create-admin', authenticateAdmin, onlySuperAdmin, async (req, res) => {
   const { username, password, email, role } = req.body;
 
@@ -367,53 +419,6 @@ app.post('/reset-password', (req, res) => {
       });
     }
   );
-});
-
-
-app.post('/login', (req, res) => {
-  const { username, password } = req.body;
-
-  if (!username || !password) {
-    return res.status(400).json({ error: 'Username and password are required' });
-  }
-
-  db.query('SELECT * FROM users WHERE username = ?', [username], (err, result) => {
-    if (err || result.length === 0) {
-      console.error('Error finding user or user not found:', err);
-      return res.status(400).json({ error: 'Invalid username or password' });
-    }
-
-    const user = result[0];
-    bcrypt.compare(password, user.password, (err, isMatch) => {
-      if (err || !isMatch) {
-        return res.status(400).json({ error: 'Invalid username or password' });
-      }
-
-      // Update last_seen timestamp
-      db.query('UPDATE users SET last_seen = ? WHERE user_id = ?', [new Date(), user.user_id], (updateErr) => {
-        if (updateErr) {
-          console.error('Error updating last seen:', updateErr);
-        }
-      });
-
-      const token = generateToken(user.user_id);
-
-      res.status(200).json({
-        token,
-        user: {
-          user_id: user.user_id,
-          referralCode: user.referralCode,
-          username: user.username,
-          email: user.email,
-          phone_number: user.phone_number,
-          bank_name: user.bank_name,
-          bank_account_number: user.bank_account_number,
-          account_name: user.account_name,
-          balance: user.balance
-        }
-      });
-    });
-  });
 });
 
 // Combined GET and POST endpoint for server-to-server balance operations
