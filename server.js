@@ -198,14 +198,286 @@ app.post(`${ADMIN_PATH}/update-password`, authenticateAdmin, async (req, res) =>
   });
 });
 
-// Endpoint to fetch user details
+// User details endpoint
 app.get('/user', authenticate, (req, res) => {
   db.query('SELECT username, balance FROM users WHERE user_id = ?', [req.user_id], (err, result) => {
     if (err || result.length === 0) {
-      console.error('Error fetching user details or user not found:', err);
+      console.error('Error fetching user details:', err);
       return res.status(500).json({ error: 'Error fetching user details' });
     }
     res.status(200).json(result[0]);
+  });
+});
+
+// Transactions: Deposits with Filtering and Pagination
+app.get(`${ADMIN_PATH}/deposits`, authenticateAdmin, (req, res) => {
+  const { status, startDate, endDate, userId, page = 1, limit = 10 } = req.query;
+  const offset = (page - 1) * limit;
+
+  let query = 'SELECT * FROM deposit_requests WHERE 1=1';
+  const params = [];
+
+  if (status) {
+    query += ' AND status = ?';
+    params.push(status);
+  }
+  if (startDate) {
+    query += ' AND created_at >= ?';
+    params.push(startDate);
+  }
+  if (endDate) {
+    query += ' AND created_at <= ?';
+    params.push(endDate);
+  }
+  if (userId) {
+    query += ' AND user_id = ?';
+    params.push(userId);
+  }
+
+  query += ' ORDER BY created_at DESC LIMIT ? OFFSET ?';
+  params.push(parseInt(limit), parseInt(offset));
+
+  db.query(query, params, (err, results) => {
+    if (err) {
+      console.error('Error fetching deposits:', err);
+      return res.status(500).json({ error: 'Error fetching deposits' });
+    }
+    res.status(200).json({ success: true, data: results });
+  });
+});
+
+// Approve Deposit Request
+app.post(`${ADMIN_PATH}/deposits/:id/approve`, authenticateAdmin, (req, res) => {
+  const { id } = req.params;
+
+  db.query('SELECT * FROM deposit_requests WHERE id = ?', [id], (err, result) => {
+    if (err || result.length === 0) {
+      return res.status(404).json({ error: 'Deposit request not found' });
+    }
+
+    const deposit = result[0];
+    if (deposit.status !== 'pending') {
+      return res.status(400).json({ error: 'Deposit request already processed' });
+    }
+
+    db.query('UPDATE users SET balance = balance + ? WHERE user_id = ?', [deposit.amount, deposit.user_id], (err) => {
+      if (err) {
+        return res.status(500).json({ error: 'Error updating user balance' });
+      }
+
+      db.query('UPDATE deposit_requests SET status = "approved" WHERE id = ?', [id], (err) => {
+        if (err) {
+          return res.status(500).json({ error: 'Error updating deposit status' });
+        }
+        res.status(200).json({ success: true, message: 'Deposit approved successfully' });
+      });
+    });
+  });
+});
+
+// Reject Deposit Request
+app.post(`${ADMIN_PATH}/deposits/:id/reject`, authenticateAdmin, (req, res) => {
+  const { id } = req.params;
+
+  db.query('UPDATE deposit_requests SET status = "rejected" WHERE id = ?', [id], (err) => {
+    if (err) {
+      return res.status(500).json({ error: 'Error rejecting deposit' });
+    }
+    res.status(200).json({ success: true, message: 'Deposit rejected successfully' });
+  });
+});
+
+// Transactions: Withdrawals with Filtering and Pagination
+app.get(`${ADMIN_PATH}/withdrawals`, authenticateAdmin, (req, res) => {
+  const { status, startDate, endDate, userId, page = 1, limit = 10 } = req.query;
+  const offset = (page - 1) * limit;
+
+  let query = 'SELECT * FROM withdrawal_requests WHERE 1=1';
+  const params = [];
+
+  if (status) {
+    query += ' AND status = ?';
+    params.push(status);
+  }
+  if (startDate) {
+    query += ' AND created_at >= ?';
+    params.push(startDate);
+  }
+  if (endDate) {
+    query += ' AND created_at <= ?';
+    params.push(endDate);
+  }
+  if (userId) {
+    query += ' AND user_id = ?';
+    params.push(userId);
+  }
+
+  query += ' ORDER BY created_at DESC LIMIT ? OFFSET ?';
+  params.push(parseInt(limit), parseInt(offset));
+
+  db.query(query, params, (err, results) => {
+    if (err) {
+      return res.status(500).json({ error: 'Error fetching withdrawals' });
+    }
+    res.status(200).json({ success: true, data: results });
+  });
+});
+
+// Approve Withdrawal Request
+app.post(`${ADMIN_PATH}/withdrawals/:id/approve`, authenticateAdmin, (req, res) => {
+  const { id } = req.params;
+
+  db.query('UPDATE withdrawal_requests SET status = "approved" WHERE id = ?', [id], (err) => {
+    if (err) {
+      return res.status(500).json({ error: 'Error approving withdrawal' });
+    }
+    res.status(200).json({ success: true, message: 'Withdrawal approved successfully' });
+  });
+});
+
+// Reject Withdrawal Request (Refund Amount)
+app.post(`${ADMIN_PATH}/withdrawals/:id/reject`, authenticateAdmin, (req, res) => {
+  const { id } = req.params;
+
+  db.query('SELECT * FROM withdrawal_requests WHERE id = ?', [id], (err, result) => {
+    if (err || result.length === 0) {
+      return res.status(404).json({ error: 'Withdrawal request not found' });
+    }
+
+    const withdrawal = result[0];
+    if (withdrawal.status !== 'pending') {
+      return res.status(400).json({ error: 'Withdrawal request already processed' });
+    }
+
+    db.query('UPDATE users SET balance = balance + ? WHERE user_id = ?', [withdrawal.amount, withdrawal.user_id], (err) => {
+      if (err) {
+        return res.status(500).json({ error: 'Error refunding user balance' });
+      }
+
+      db.query('UPDATE withdrawal_requests SET status = "rejected" WHERE id = ?', [id], (err) => {
+        if (err) {
+          return res.status(500).json({ error: 'Error updating withdrawal status' });
+        }
+        res.status(200).json({ success: true, message: 'Withdrawal rejected and amount refunded' });
+      });
+    });
+  });
+});
+
+// Finances Summary with Time Period Filtering
+app.get(`${ADMIN_PATH}/finances/summary`, authenticateAdmin, (req, res) => {
+  const { startDate, endDate } = req.query;
+
+  const query = `
+    SELECT 
+      SUM(CASE WHEN t.type = 'deposit' AND dr.status = 'approved' THEN dr.amount ELSE 0 END) as total_deposits,
+      SUM(CASE WHEN t.type = 'withdrawal' AND wr.status = 'approved' THEN wr.amount ELSE 0 END) as total_withdrawals,
+      SUM(wgo.winner_amount) as total_bets,
+      SUM(wgo.rake) as total_rake
+    FROM transactions t
+    LEFT JOIN deposit_requests dr ON t.user_id = dr.user_id AND t.type = 'deposit'
+    LEFT JOIN withdrawal_requests wr ON t.user_id = wr.user_id AND t.type = 'withdrawal'
+    LEFT JOIN whot_game_outcomes wgo ON t.user_id = wgo.winner_id
+    WHERE t.created_at BETWEEN ? AND ?
+  `;
+
+  db.query(query, [startDate || '1970-01-01', endDate || new Date()], (err, result) => {
+    if (err) {
+      return res.status(500).json({ error: 'Error fetching finances summary' });
+    }
+    res.status(200).json({ success: true, data: result[0] });
+  });
+});
+
+// Whot Games Interface with Filtering and Pagination
+app.get(`${ADMIN_PATH}/games/whot`, authenticateAdmin, (req, res) => {
+  const { playerId, startDate, endDate, roomId, page = 1, limit = 10 } = req.query;
+  const offset = (page - 1) * limit;
+
+  let query = 'SELECT * FROM whot_game_outcomes WHERE 1=1';
+  const params = [];
+
+  if (playerId) {
+    query += ' AND winner_id = ?';
+    params.push(playerId);
+  }
+  if (startDate) {
+    query += ' AND created_at >= ?';
+    params.push(startDate);
+  }
+  if (endDate) {
+    query += ' AND created_at <= ?';
+    params.push(endDate);
+  }
+  if (roomId) {
+    query += ' AND table_name = ?';
+    params.push(roomId);
+  }
+
+  query += ' ORDER BY created_at DESC LIMIT ? OFFSET ?';
+  params.push(parseInt(limit), parseInt(offset));
+
+  db.query(query, params, (err, results) => {
+    if (err) {
+      return res.status(500).json({ error: 'Error fetching Whot games' });
+    }
+    res.status(200).json({ success: true, data: results });
+  });
+});
+
+// Registered Users with Time Period Filtering and Pagination
+app.get(`${ADMIN_PATH}/users/registered`, authenticateAdmin, (req, res) => {
+  const { startDate, endDate, page = 1, limit = 10 } = req.query;
+  const offset = (page - 1) * limit;
+
+  let query = 'SELECT user_id, username, email, phone_number, created_at FROM users WHERE created_at BETWEEN ? AND ?';
+  query += ' ORDER BY created_at DESC LIMIT ? OFFSET ?';
+
+  db.query(query, [startDate || '1970-01-01', endDate || new Date(), parseInt(limit), parseInt(offset)], (err, results) => {
+    if (err) {
+      return res.status(500).json({ error: 'Error fetching registered users' });
+    }
+    res.status(200).json({ success: true, data: results });
+  });
+});
+
+// Chart Data for Deposits Over Time
+app.get(`${ADMIN_PATH}/charts/deposits`, authenticateAdmin, (req, res) => {
+  const { startDate, endDate } = req.query;
+
+  const query = `
+    SELECT DATE(created_at) as date, SUM(amount) as total
+    FROM deposit_requests
+    WHERE status = 'approved' AND created_at BETWEEN ? AND ?
+    GROUP BY DATE(created_at)
+    ORDER BY date ASC
+  `;
+
+  db.query(query, [startDate || '1970-01-01', endDate || new Date()], (err, results) => {
+    if (err) {
+      return res.status(500).json({ error: 'Error fetching deposit chart data' });
+    }
+    res.status(200).json({ success: true, data: results });
+  });
+});
+
+// Chart Data for Whot Game Bets Over Time
+app.get(`${ADMIN_PATH}/charts/whot-bets`, authenticateAdmin, (req, res) => {
+  const { startDate, endDate } = req.query;
+
+  const query = `
+    SELECT DATE(created_at) as date, SUM(winner_amount) as total_bets
+    FROM whot_game_outcomes
+    WHERE created_at BETWEEN ? AND ?
+    GROUP BY DATE(created_at)
+    ORDER BY date ASC
+  `;
+
+  db.query(query, [startDate || '1970-01-01', endDate || new Date()], (err, results) => {
+    if (err) {
+      return res.status(500).json({ error: 'Error fetching Whot bets chart data' });
+    }
+    res.status(200).json({ success: true, data: results });
   });
 });
 
