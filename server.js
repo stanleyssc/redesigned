@@ -35,11 +35,9 @@ const authenticate = (req, res, next) => {
   if (!token) return res.status(401).json({ error: 'No token provided' });
   jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
     if (err) {
-      console.error('Token verification failed:', err.message);
       return res.status(401).json({ error: 'Invalid token' });
     }
     req.user_id = decoded.user_id;
-    console.log('Authenticated user_id:', req.user_id);
     next();
   });
 };
