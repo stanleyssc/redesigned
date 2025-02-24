@@ -88,53 +88,64 @@ db.on('error', (err) => {
 
 // Unified Login Endpoint
 app.post('/login', (req, res) => {
-  const { username, password } = req.body;
-  const isAdminLogin = req.headers['x-login-type'] === 'admin';
+    const { username, password } = req.body;
+    const isAdminLogin = req.headers['x-login-type'] === 'admin';
 
-  if (!username || !password) {
-    return res.status(400).json({ error: 'Username and password are required' });
-  }
-
-  db.query('SELECT * FROM users WHERE username = ?', [username], (err, result) => {
-    if (err || result.length === 0) {
-      console.error('Error finding user or user not found:', err);
-      return res.status(400).json({ error: 'Invalid username or password' });
+    if (!username || !password) {
+        return res.status(400).json({ error: 'Username and password are required' });
     }
 
-    const user = result[0];
-    bcrypt.compare(password, user.password, (err, isMatch) => {
-      if (err || !isMatch) {
-        return res.status(400).json({ error: 'Invalid username or password' });
-      }
-
-      if (isAdminLogin && user.role === 'user') {
-        return res.status(403).json({ error: 'Admin access required' });
-      }
-
-      db.query('UPDATE users SET last_seen = ? WHERE user_id = ?', [new Date(), user.user_id], (updateErr) => {
-        if (updateErr) {
-          console.error('Error updating last seen:', updateErr);
+    db.query('SELECT * FROM users WHERE username = ?', [username], (err, result) => {
+        if (err || result.length === 0) {
+            console.error('Error finding user or user not found:', err);
+            return res.status(400).json({ error: 'Invalid username or password' });
         }
-      });
 
-      const token = generateToken(user.user_id);
-      res.status(200).json({
-        token,
-        user: {
-          user_id: user.user_id,
-          referralCode: user.referralCode,
-          username: user.username,
-          email: user.email,
-          phone_number: user.phone_number,
-          bank_name: user.bank_name,
-          bank_account_number: user.bank_account_number,
-          account_name: user.account_name,
-          balance: user.balance,
-          role: user.role
-        }
-      });
+        const user = result[0];
+        bcrypt.compare(password, user.password, (err, isMatch) => {
+            if (err || !isMatch) {
+                return res.status(400).json({ error: 'Invalid username or password' });
+            }
+
+            if (isAdminLogin && user.role === 'user') {
+                return res.status(403).json({ error: 'Admin access required' });
+            }
+
+            // Update last_seen and isFirstLogin if true
+            const updates = { last_seen: new Date() };
+            if (user.isFirstLogin) {
+                updates.isFirstLogin = false;
+            }
+
+            db.query(
+                'UPDATE users SET last_seen = ?, isFirstLogin = ? WHERE user_id = ?',
+                [updates.last_seen, updates.isFirstLogin || user.isFirstLogin, user.user_id],
+                (updateErr) => {
+                    if (updateErr) {
+                        console.error('Error updating user data:', updateErr);
+                    }
+                }
+            );
+
+            const token = generateToken(user.user_id);
+            res.status(200).json({
+                token,
+                user: {
+                    user_id: user.user_id,
+                    referralCode: user.referralCode,
+                    username: user.username,
+                    email: user.email,
+                    phone_number: user.phone_number,
+                    bank_name: user.bank_name,
+                    bank_account_number: user.bank_account_number,
+                    account_name: user.account_name,
+                    balance: user.balance,
+                    role: user.role,
+                    isFirstLogin: user.isFirstLogin // Send flag to client
+                }
+            });
+        });
     });
-  });
 });
 
 // Create Admin Endpoint
@@ -558,79 +569,80 @@ app.post('/save-game-outcome', async (req, res) => {
 
 // Function to register a new user
 async function registerUser(username, password, email, phone_number, referralCode, referrerCode, dob) {
-  return new Promise((resolve, reject) => {
-    console.log('Registering user with:', { username, email, dob, referralCode, referrerCode });
+    return new Promise((resolve, reject) => {
+        console.log('Registering user with:', { username, email, dob, referralCode, referrerCode });
 
-    db.query(
-      'INSERT INTO users (username, password, balance, email, phone_number, referralCode, referrer_code, date_of_birth) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [username, password, 200, email, phone_number, referralCode, referrerCode, dob],
-      (err, insertResult) => {
-        if (err) {
-          console.error('Error registering user:', err.message);
-          reject(err);
-        } else {
-          const newUserId = insertResult.insertId;
-          console.log('User successfully registered with ID:', newUserId);
-          resolve(newUserId);
-        }
-      }
-    );
-  });
+        db.query(
+            'INSERT INTO users (username, password, balance, email, phone_number, referralCode, referrer_code, date_of_birth, isFirstLogin) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [username, password, 1000, email, phone_number, referralCode, referrerCode, dob, true], // Balance 1000, isFirstLogin true
+            (err, insertResult) => {
+                if (err) {
+                    console.error('Error registering user:', err.message);
+                    reject(err);
+                } else {
+                    const newUserId = insertResult.insertId;
+                    console.log('User successfully registered with ID:', newUserId);
+                    resolve(newUserId);
+                }
+            }
+        );
+    });
 }
 
 // Registration endpoint
 app.post('/register', async (req, res) => {
-  try {
-    const { username, password, email, phone_number, referrerCode, dob } = req.body;
-    if (!username || !password || (!email && !phone_number)) {
-      return res.status(400).json({ error: 'Username, password, and either email or phone number are required' });
-    }
-    const formattedDob = dob ? new Date(dob).toISOString().split('T')[0] : null;
-    const referralCode = await generateUniqueReferralCode();
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    let referrerId = null;
-    if (referrerCode) {
-      const referrerResult = await new Promise((resolve, reject) => {
-        db.query('SELECT referralCode FROM users WHERE referralCode = ?', [referrerCode], (err, result) => {
-          if (err) reject(err);
-          resolve(result);
-        });
-      });
-      if (!referrerResult || referrerResult.length === 0) {
-        return res.status(400).json({ error: 'Invalid referral code' });
-      }
-      referrerId = referrerCode;
-    }
-
-    const newUserId = await registerUser(username, hashedPassword, email, phone_number, referralCode, referrerId, formattedDob);
-    const token = jwt.sign({ userId: newUserId }, process.env.JWT_SECRET, { expiresIn: '7d' }); // Updated secret
-
-    db.query('SELECT * FROM users WHERE user_id = ?', [newUserId], (err, result) => {
-      if (err || result.length === 0) {
-        return res.status(500).json({ error: 'Error retrieving user data' });
-      }
-      const user = result[0];
-      res.status(201).json({
-        message: 'User registered successfully',
-        token,
-        user: {
-          user_id: user.user_id,
-          referralCode: user.referralCode,
-          username: user.username,
-          email: user.email,
-          phone_number: user.phone_number,
-          bank_name: user.bank_name,
-          bank_account_number: user.bank_account_number,
-          account_name: user.account_name,
-          balance: user.balance
+    try {
+        const { username, password, email, phone_number, referrerCode, dob } = req.body;
+        if (!username || !password || (!email && !phone_number)) {
+            return res.status(400).json({ error: 'Username, password, and either email or phone number are required' });
         }
-      });
-    });
-  } catch (err) {
-    console.error('Error during registration:', err.message);
-    return res.status(500).json({ error: 'Internal server error' });
-  }
+        const formattedDob = dob ? new Date(dob).toISOString().split('T')[0] : null;
+        const referralCode = await generateUniqueReferralCode();
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        let referrerId = null;
+        if (referrerCode) {
+            const referrerResult = await new Promise((resolve, reject) => {
+                db.query('SELECT referralCode FROM users WHERE referralCode = ?', [referrerCode], (err, result) => {
+                    if (err) reject(err);
+                    resolve(result);
+                });
+            });
+            if (!referrerResult || referrerResult.length === 0) {
+                return res.status(400).json({ error: 'Invalid referral code' });
+            }
+            referrerId = referrerCode;
+        }
+
+        const newUserId = await registerUser(username, hashedPassword, email, phone_number, referralCode, referrerId, formattedDob);
+        const token = jwt.sign({ userId: newUserId }, process.env.JWT_SECRET, { expiresIn: '7d' });
+
+        db.query('SELECT * FROM users WHERE user_id = ?', [newUserId], (err, result) => {
+            if (err || result.length === 0) {
+                return res.status(500).json({ error: 'Error retrieving user data' });
+            }
+            const user = result[0];
+            res.status(201).json({
+                message: 'User registered successfully',
+                token,
+                user: {
+                    user_id: user.user_id,
+                    referralCode: user.referralCode,
+                    username: user.username,
+                    email: user.email,
+                    phone_number: user.phone_number,
+                    bank_name: user.bank_name,
+                    bank_account_number: user.bank_account_number,
+                    account_name: user.account_name,
+                    balance: user.balance,
+                    isFirstLogin: user.isFirstLogin // Include flag
+                }
+            });
+        });
+    } catch (err) {
+        console.error('Error during registration:', err.message);
+        return res.status(500).json({ error: 'Internal server error' });
+    }
 });
 
 module.exports = app;
