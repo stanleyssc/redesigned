@@ -568,20 +568,18 @@ app.post('/save-game-outcome', async (req, res) => {
 
 
 // Function to register a new user
-async function registerUser(username, password, email, phone_number, referralCode, referrerCode, dob) {
+async function registerUser(username, password, email, phone_number, referralCode, referrerCode, above18) {
     return new Promise((resolve, reject) => {
-        console.log('Registering user with:', { username, email, dob, referralCode, referrerCode });
 
         db.query(
-            'INSERT INTO users (username, password, balance, email, phone_number, referralCode, referrer_code, date_of_birth, isFirstLogin) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            [username, password, 1000, email, phone_number, referralCode, referrerCode, dob, true], // Balance 1000, isFirstLogin true
+            'INSERT INTO users (username, password, balance, email, phone_number, referralCode, referrer_code, above18, isFirstLogin) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [username, password, 1000, email, phone_number, referralCode, referrerCode, above18, true],
             (err, insertResult) => {
                 if (err) {
                     console.error('Error registering user:', err.message);
                     reject(err);
                 } else {
                     const newUserId = insertResult.insertId;
-                    console.log('User successfully registered with ID:', newUserId);
                     resolve(newUserId);
                 }
             }
@@ -592,11 +590,22 @@ async function registerUser(username, password, email, phone_number, referralCod
 // Registration endpoint
 app.post('/register', async (req, res) => {
     try {
-        const { username, password, email, phone_number, referrerCode, dob } = req.body;
+        const { username, password, email, phone_number, referrerCode, above18 } = req.body;
         if (!username || !password || (!email && !phone_number)) {
             return res.status(400).json({ error: 'Username, password, and either email or phone number are required' });
         }
-        const formattedDob = dob ? new Date(dob).toISOString().split('T')[0] : null;
+
+        // Phone number validation
+        const phoneRegex = /^[0-9]{11}$/;
+        if (phone_number && !phoneRegex.test(phone_number)) {
+            return res.status(400).json({ error: 'Phone number must be exactly 11 digits and contain only numbers' });
+        }
+
+        // Above 18 validation
+        if (!above18 || above18 !== true) {
+            return res.status(400).json({ error: 'You must confirm you are above 18 years old' });
+        }
+
         const referralCode = await generateUniqueReferralCode();
         const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -614,7 +623,7 @@ app.post('/register', async (req, res) => {
             referrerId = referrerCode;
         }
 
-        const newUserId = await registerUser(username, hashedPassword, email, phone_number, referralCode, referrerId, formattedDob);
+        const newUserId = await registerUser(username, hashedPassword, email, phone_number, referralCode, referrerId, above18);
         const token = jwt.sign({ userId: newUserId }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
         db.query('SELECT * FROM users WHERE user_id = ?', [newUserId], (err, result) => {
@@ -635,7 +644,7 @@ app.post('/register', async (req, res) => {
                     bank_account_number: user.bank_account_number,
                     account_name: user.account_name,
                     balance: user.balance,
-                    isFirstLogin: user.isFirstLogin // Include flag
+                    isFirstLogin: user.isFirstLogin
                 }
             });
         });
