@@ -7,6 +7,15 @@ const bcrypt = require('bcrypt');
 const cron = require('node-cron');
 const path = require('path');
 require('dotenv').config();
+const { SESClient, SendEmailCommand } = require('@aws-sdk/client-ses');
+
+const sesClient = new SESClient({
+    region: 'us-east-1',
+    credentials: {
+        accessKeyId: 'YOUR_AWS_ACCESS_KEY_ID', // Replace after SES setup
+        secretAccessKey: 'YOUR_AWS_SECRET_ACCESS_KEY' // Replace after SES setup
+    }
+});
 
 const app = express();
 app.use(express.json());
@@ -650,49 +659,104 @@ app.post('/register', async (req, res) => {
         });
     } catch (err) {
         console.error('Error during registration:', err.message);
-        return res.status(500).json({ error: 'Internal server error' });
+        if (err.code === 'ER_DUP_ENTRY') {
+            if (err.message.includes('users.username')) {
+                return res.status(400).json({ error: 'Username already exists' });
+            } else if (err.message.includes('users.email')) {
+                return res.status(400).json({ error: 'User with this email already exists' });
+            } else if (err.message.includes('users.phone_number')) {
+                return res.status(400).json({ error: 'User with this phone number already exists' });
+            }
+        }
+        return res.status(500).json({ error: 'An error occurred. Please try again.' });
     }
 });
 
 module.exports = app;
 
-// Reset Password Endpoint (updated secret key)
-app.post('/reset-password', (req, res) => {
-  const { username, dob, newPassword } = req.body;
-  if (!username || !dob || !newPassword) {
-    return res.status(400).json({ error: 'Username, date of birth, and new password are required' });
-  }
-  const normalizedDob = new Date(dob).toISOString().split('T')[0];
-  db.query('SELECT user_id, date_of_birth FROM users WHERE username = ?', [username], (err, result) => {
-    if (err) {
-      console.error('Error querying database:', err.message);
-      return res.status(500).json({ error: 'Error verifying user information' });
+const resetOTPs = new Map();
+
+function generateOTP() {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+app.post('/initiate-reset-password', async (req, res) => {
+    const { username } = req.body;
+    if (!username) {
+        return res.status(400).json({ error: 'Username is required' });
     }
-    if (result.length === 0) {
-      return res.status(400).json({ error: 'User not found' });
-    }
-    const storedDob = result[0].date_of_birth;
-    const normalizedStoredDob = new Date(storedDob).toISOString().split('T')[0];
-    if (normalizedStoredDob !== normalizedDob) {
-      return res.status(400).json({ error: 'Invalid date of birth' });
-    }
-    bcrypt.hash(newPassword, 10, (hashErr, hashedPassword) => {
-      if (hashErr) {
-        return res.status(500).json({ error: 'Error hashing the password' });
-      }
-      db.query('UPDATE users SET password = ? WHERE username = ?', [hashedPassword, username], (updateErr, updateResult) => {
-        if (updateErr) {
-          console.error('Error updating password:', updateErr.message);
-          return res.status(500).json({ error: 'Error updating password' });
+
+    db.query('SELECT user_id, email FROM users WHERE username = ?', [username], (err, result) => {
+        if (err) {
+            console.error('Error querying database:', err.message);
+            return res.status(500).json({ error: 'Error verifying user information' });
         }
-        if (updateResult.affectedRows === 0) {
-          return res.status(400).json({ error: 'User not found' });
+        if (result.length === 0 || !result[0].email) {
+            return res.status(400).json({ error: 'User not found or no email registered' });
         }
-        const newToken = jwt.sign({ userId: result[0].user_id }, process.env.JWT_SECRET, { expiresIn: '7d' }); // Updated secret
-        return res.status(200).json({ message: 'Password reset successfully', token: newToken });
-      });
+
+        const user = result[0];
+        const otp = generateOTP();
+        resetOTPs.set(user.user_id, { otp, expires: Date.now() + 15 * 60 * 1000 });
+
+        const command = new SendEmailCommand({
+            Source: 'hello@naijagamers.com',
+            Destination: { ToAddresses: [user.email] },
+            Message: {
+                Subject: { Data: 'Naija Gamers Password Reset OTP' },
+                Body: { Text: { Data: `Your OTP is ${otp}. It expires in 15 minutes.` } }
+            }
+        });
+
+        sesClient.send(command)
+            .then(() => res.status(200).json({ message: 'OTP sent to your email' }))
+            .catch(error => {
+                console.error('Error sending email:', error);
+                res.status(500).json({ error: 'Error sending OTP' });
+            });
     });
-  });
+});
+
+app.post('/reset-password', (req, res) => {
+    const { username, otp, newPassword } = req.body;
+    if (!username || !otp || !newPassword) {
+        return res.status(400).json({ error: 'Username, OTP, and new password are required' });
+    }
+
+    db.query('SELECT user_id FROM users WHERE username = ?', [username], (err, result) => {
+        if (err) {
+            console.error('Error querying database:', err.message);
+            return res.status(500).json({ error: 'Error verifying user information' });
+        }
+        if (result.length === 0) {
+            return res.status(400).json({ error: 'User not found' });
+        }
+
+        const userId = result[0].user_id;
+        const storedOTP = resetOTPs.get(userId);
+
+        if (!storedOTP || storedOTP.otp !== otp || Date.now() > storedOTP.expires) {
+            return res.status(400).json({ error: 'Invalid or expired OTP' });
+        }
+
+        bcrypt.hash(newPassword, 10, (hashErr, hashedPassword) => {
+            if (hashErr) {
+                return res.status(500).json({ error: 'Error hashing the password' });
+            }
+            db.query('UPDATE users SET password = ? WHERE user_id = ?', [hashedPassword, userId], (updateErr, updateResult) => {
+                if (updateErr) {
+                    console.error('Error updating password:', updateErr.message);
+                    return res.status(500).json({ error: 'Error updating password' });
+                }
+                if (updateResult.affectedRows === 0) {
+                    return res.status(400).json({ error: 'User not found' });
+                }
+                resetOTPs.delete(userId);
+                const newToken = jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '7d' });
+                return res.status(200).json({ message: 'Password reset successfully', token: newToken });
+            });
+        });
+    });
 });
 
 // Combined GET and POST endpoint for server-to-server balance operations
