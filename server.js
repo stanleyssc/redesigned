@@ -638,21 +638,18 @@ async function registerUser(username, password, email, phone_number, referralCod
     });
 }
 
-// Registration endpoint
-app.post('/register', async (req, res) => {
+// Registration endpointapp.post('/register', async (req, res) => {
     try {
         const { username, password, email, phone_number, referrerCode, above18 } = req.body;
         if (!username || !password || (!email && !phone_number)) {
             return res.status(400).json({ error: 'Username, password, and either email or phone number are required' });
         }
 
-        // Phone number validation
         const phoneRegex = /^[0-9]{11}$/;
         if (phone_number && !phoneRegex.test(phone_number)) {
             return res.status(400).json({ error: 'Phone number must be exactly 11 digits and contain only numbers' });
         }
 
-        // Above 18 validation
         if (!above18 || above18 !== true) {
             return res.status(400).json({ error: 'You must confirm you are above 18 years old' });
         }
@@ -694,7 +691,7 @@ app.post('/register', async (req, res) => {
                     bank_name: user.bank_name,
                     bank_account_number: user.bank_account_number,
                     account_name: user.account_name,
-                    balance: user.balance,
+                    balance: user.balance, // Ensure balance is included
                     isFirstLogin: user.isFirstLogin
                 }
             });
