@@ -1161,20 +1161,34 @@ app.get('/referral/referral-bonus', async (req, res) => {
 
 
 app.post('/deposit', authenticate, (req, res) => {
-    const { user_id, username, balance } = req.user; // Extract user info from the token
-    const { amount } = req.body;
+    const { username, amount } = req.body;
+    const userId = req.user_id; // Extracted from the token
 
-    // Insert deposit request into the database
-    const query = `
-        INSERT INTO deposit_requests (user_id, username, balance, amount, status)
-        VALUES (?, ?, ?, ?, 'pending')
-    `;
-    db.query(query, [user_id, username, balance, amount], (err, result) => {
-        if (err) {
-            console.error('Error inserting deposit request:', err);
-            return res.status(500).json({ error: 'Error submitting deposit request' });
+    if (!username || !amount || isNaN(amount) || amount <= 0) {
+        return res.status(400).json({ error: 'Invalid username or amount' });
+    }
+
+    // Fetch user balance to include in the deposit request
+    db.query('SELECT balance FROM users WHERE user_id = ?', [userId], (err, result) => {
+        if (err || result.length === 0) {
+            console.error('Error fetching user balance:', err);
+            return res.status(500).json({ error: 'Error fetching user data' });
         }
-        res.status(200).json({ message: 'Deposit request submitted successfully' });
+
+        const balance = result[0].balance;
+
+        // Insert deposit request into the database
+        const query = `
+            INSERT INTO deposit_requests (user_id, username, balance, amount, status)
+            VALUES (?, ?, ?, ?, 'pending')
+        `;
+        db.query(query, [userId, username, balance, amount], (err, result) => {
+            if (err) {
+                console.error('Error inserting deposit request:', err);
+                return res.status(500).json({ error: 'Error submitting deposit request' });
+            }
+            res.status(200).json({ message: 'Deposit request submitted successfully' });
+        });
     });
 });
 
