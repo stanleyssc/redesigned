@@ -638,7 +638,8 @@ async function registerUser(username, password, email, phone_number, referralCod
     });
 }
 
-// Registration endpointapp.post('/register', async (req, res) => {
+// Registration endpoint
+app.post('/register', async (req, res) => {
     try {
         const { username, password, email, phone_number, referrerCode, above18 } = req.body;
         if (!username || !password || (!email && !phone_number)) {
