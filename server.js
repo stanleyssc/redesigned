@@ -212,6 +212,48 @@ app.post(`${ADMIN_PATH}/update-password`, authenticateAdmin, async (req, res) =>
   });
 });
 
+// Fetch list of tournaments
+app.get('/tournaments', authenticate, (req, res) => {
+    const userId = req.user_id;
+
+    const query = `
+        SELECT t.*,
+               (SELECT COUNT(*) FROM tournament_registrations WHERE tournament_id = t.id) AS registered_players,
+               IF(EXISTS(SELECT 1 FROM tournament_registrations WHERE tournament_id = t.id AND user_id = ?), 1, 0) AS is_registered
+        FROM tournaments t
+    `;
+
+    db.query(query, [userId], (err, results) => {
+        if (err) {
+            console.error('Error fetching tournaments:', err);
+            return res.status(500).json({ error: 'Error fetching tournaments' });
+        }
+        res.status(200).json(results);
+    });
+});
+
+app.post('/tournaments', authenticate, (req, res) => {
+    // Add admin check if required (e.g., if (req.user.role !== 'admin') return res.status(403).json({ error: 'Unauthorized' }))
+    const { name, prize_pool, start_time, max_players, registration_fee } = req.body;
+
+    if (!name || !prize_pool || !start_time || !max_players || !registration_fee) {
+        return res.status(400).json({ error: 'All fields are required' });
+    }
+
+    const query = `
+        INSERT INTO tournaments (name, prize_pool, start_time, max_players, registration_fee)
+        VALUES (?, ?, ?, ?, ?)
+    `;
+
+    db.query(query, [name, prize_pool, start_time, max_players, registration_fee], (err, result) => {
+        if (err) {
+            console.error('Error creating tournament:', err);
+            return res.status(500).json({ error: 'Error creating tournament' });
+        }
+        res.status(201).json({ message: 'Tournament created', id: result.insertId });
+    });
+});
+
 // User details endpoint
 app.get('/user', authenticate, (req, res) => {
   db.query('SELECT username, balance FROM users WHERE user_id = ?', [req.user_id], (err, result) => {
