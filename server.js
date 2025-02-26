@@ -92,7 +92,7 @@ const db = mysql.createPool({
 });
 
 db.on('error', (err) => {
-  console.error('Database error:', err);
+  // console.error('Database error:', err);
 });
 
 // Unified Login Endpoint
@@ -106,7 +106,6 @@ app.post('/login', (req, res) => {
 
     db.query('SELECT * FROM users WHERE username = ?', [username], (err, result) => {
         if (err || result.length === 0) {
-            console.error('Error finding user or user not found:', err);
             return res.status(400).json({ error: 'Invalid username or password' });
         }
 
@@ -131,7 +130,7 @@ app.post('/login', (req, res) => {
                 [updates.last_seen, updates.isFirstLogin || user.isFirstLogin, user.user_id],
                 (updateErr) => {
                     if (updateErr) {
-                        console.error('Error updating user data:', updateErr);
+                        return;
                     }
                 }
             );
@@ -172,7 +171,6 @@ app.post(`${ADMIN_PATH}/create-admin`, authenticateAdmin, onlySuperAdmin, async 
       [username, hashedPassword, email, role],
       (err, result) => {
         if (err) {
-          console.error('Error creating admin:', err);
           return res.status(500).json({ error: 'Error creating admin' });
         }
         res.status(201).json({ success: true, message: 'Admin created', userId: result.insertId });
@@ -204,7 +202,6 @@ app.post(`${ADMIN_PATH}/update-password`, authenticateAdmin, async (req, res) =>
     const hashedNewPassword = await bcrypt.hash(newPassword, 10);
     db.query('UPDATE users SET password = ? WHERE user_id = ?', [hashedNewPassword, req.user_id], (err) => {
       if (err) {
-        console.error('Error updating password:', err);
         return res.status(500).json({ error: 'Error updating password' });
       }
       res.status(200).json({ success: true, message: 'Password updated successfully' });
@@ -225,7 +222,6 @@ app.get('/tournaments', authenticate, (req, res) => {
 
     db.query(query, [userId], (err, results) => {
         if (err) {
-            console.error('Error fetching tournaments:', err);
             return res.status(500).json({ error: 'Error fetching tournaments' });
         }
         res.status(200).json(results);
@@ -247,7 +243,6 @@ app.post('/tournaments', authenticate, (req, res) => {
 
     db.query(query, [name, prize_pool, start_time, max_players, registration_fee], (err, result) => {
         if (err) {
-            console.error('Error creating tournament:', err);
             return res.status(500).json({ error: 'Error creating tournament' });
         }
         res.status(201).json({ message: 'Tournament created', id: result.insertId });
@@ -258,7 +253,6 @@ app.post('/tournaments', authenticate, (req, res) => {
 app.get('/user', authenticate, (req, res) => {
   db.query('SELECT username, balance FROM users WHERE user_id = ?', [req.user_id], (err, result) => {
     if (err || result.length === 0) {
-      console.error('Error fetching user details:', err);
       return res.status(500).json({ error: 'Error fetching user details' });
     }
     res.status(200).json(result[0]);
@@ -295,7 +289,6 @@ app.get(`${ADMIN_PATH}/deposits`, authenticateAdmin, (req, res) => {
 
   db.query(query, params, (err, results) => {
     if (err) {
-      console.error('Error fetching deposits:', err);
       return res.status(500).json({ error: 'Error fetching deposits' });
     }
     res.status(200).json({ success: true, data: results });
@@ -549,7 +542,6 @@ async function generateUniqueReferralCode() {
     const result = await new Promise((resolve, reject) => {
       db.query('SELECT referralCode FROM users WHERE referralCode = ?', [code], (err, result) => {
         if (err) {
-          console.error('Error checking referral code uniqueness:', err.message);
           reject(err);
         }
         resolve(result);
@@ -584,7 +576,6 @@ app.post('/save-game-outcome', async (req, res) => {
     rake === undefined ||
     !playerTotals
   ) {
-    console.error("Validation error:", { startTime, endTime, roomId, winnerId, winnerName, winnings, rake, playerTotals });
     return res.status(400).json({ error: 'All fields are required' });
   }
 
@@ -609,7 +600,6 @@ app.post('/save-game-outcome', async (req, res) => {
     ],
     (err, result) => {
       if (err) {
-        console.error("Error saving game outcome:", err);
         return res.status(500).json({ error: 'Failed to save game outcome' });
       }
       res.status(200).json({ message: 'Game outcome saved successfully', id: result.insertId });
@@ -627,7 +617,6 @@ async function registerUser(username, password, email, phone_number, referralCod
             [username, password, 1000, email, phone_number, referralCode, referrerCode, above18, true],
             (err, insertResult) => {
                 if (err) {
-                    console.error('Error registering user:', err.message);
                     reject(err);
                 } else {
                     const newUserId = insertResult.insertId;
@@ -698,7 +687,6 @@ app.post('/register', async (req, res) => {
             });
         });
     } catch (err) {
-        console.error('Error during registration:', err.message);
         if (err.code === 'ER_DUP_ENTRY') {
             if (err.message.includes('users.username')) {
                 return res.status(400).json({ error: 'Username already exists' });
@@ -728,7 +716,6 @@ app.post('/initiate-reset-password', async (req, res) => {
 
     db.query('SELECT user_id, email FROM users WHERE username = ?', [username], (err, result) => {
         if (err) {
-            console.error('Error querying database:', err.message);
             return res.status(500).json({ error: 'Error verifying user information' });
         }
         if (result.length === 0 || !result[0].email) {
@@ -751,7 +738,6 @@ app.post('/initiate-reset-password', async (req, res) => {
         sesClient.send(command)
             .then(() => res.status(200).json({ message: 'OTP sent to your email' }))
             .catch(error => {
-                console.error('Error sending email:', error);
                 res.status(500).json({ error: 'Error sending OTP' });
             });
     });
@@ -765,7 +751,6 @@ app.post('/reset-password', (req, res) => {
 
     db.query('SELECT user_id FROM users WHERE username = ?', [username], (err, result) => {
         if (err) {
-            console.error('Error querying database:', err.message);
             return res.status(500).json({ error: 'Error verifying user information' });
         }
         if (result.length === 0) {
@@ -785,7 +770,6 @@ app.post('/reset-password', (req, res) => {
             }
             db.query('UPDATE users SET password = ? WHERE user_id = ?', [hashedPassword, userId], (updateErr, updateResult) => {
                 if (updateErr) {
-                    console.error('Error updating password:', updateErr.message);
                     return res.status(500).json({ error: 'Error updating password' });
                 }
                 if (updateResult.affectedRows === 0) {
@@ -809,7 +793,6 @@ app.route('/server-balance')
     }
     db.query('SELECT balance FROM users WHERE username = ?', [username], (err, result) => {
       if (err) {
-        console.error('Error fetching balance for username:', username, err);
         return res.status(500).json({ error: 'Error fetching balance' });
       }
       if (result.length === 0) {
@@ -826,7 +809,6 @@ app.route('/server-balance')
     }
     db.query('UPDATE users SET balance = ? WHERE username = ?', [balance, username], (err, result) => {
       if (err) {
-        console.error('Error updating balance for username:', username, err);
         return res.status(500).json({ error: 'Error updating balance' });
       }
       if (result.affectedRows === 0) {
@@ -842,7 +824,6 @@ app.route('/balance')
   .get(authenticate, (req, res) => {
     db.query('SELECT balance FROM users WHERE user_id = ?', [req.user_id], (err, result) => {
       if (err || result.length === 0) {
-        console.error('Error fetching balance or user not found:', err);
         return res.status(500).json({ error: 'Error fetching balance' });
       }
       res.status(200).json({ balance: result[0].balance });
@@ -857,7 +838,6 @@ app.route('/balance')
 
     db.query('UPDATE users SET balance = ? WHERE user_id = ?', [balance, req.user_id], (err, result) => {
       if (err) {
-        console.error('Error updating balance:', err);
         return res.status(500).json({ error: 'Error updating balance' });
       }
       if (result.affectedRows === 0) {
@@ -903,7 +883,6 @@ app.get('/winners', (req, res) => {
 
   db.query(query, (err, result) => {
     if (err) {
-      console.error('Error fetching winners:', err);
       return res.status(500).json({ error: 'Error fetching winners' });
     }
 
@@ -957,7 +936,6 @@ app.post('/transaction', (req, res) => {
 
   db.query('SELECT balance FROM users WHERE user_id = ?', [userId], (err, result) => {
     if (err || result.length === 0) {
-      console.error('Error fetching user balance:', err);
       return res.status(500).json({ error: 'Error fetching user data' });
     }
 
@@ -973,7 +951,6 @@ app.post('/transaction', (req, res) => {
     // Update the user's balance
     db.query('UPDATE users SET balance = ? WHERE user_id = ?', [newBalance, userId], (updateErr) => {
       if (updateErr) {
-        console.error('Error updating balance:', updateErr);
         return res.status(500).json({ error: 'Error updating balance' });
       }
 
@@ -984,7 +961,6 @@ app.post('/transaction', (req, res) => {
       `;
       db.query(query, [userId, type, amount, newBalance], (logErr) => {
         if (logErr) {
-          console.error('Error logging transaction:', logErr);
           return res.status(500).json({ error: 'Error logging transaction' });
         }
 
@@ -1045,7 +1021,6 @@ app.put('/update-profile', authenticate, (req, res) => {
   // Perform the database update
   db.query(updateQuery, values, (err, result) => {
     if (err) {
-      console.error('Error updating profile:', err);
       return res.status(500).json({ error: 'Error updating profile' });
     }
 
@@ -1055,7 +1030,6 @@ app.put('/update-profile', authenticate, (req, res) => {
 
     db.query('SELECT user_id, referralCode, username, email, phone_number, bank_name, bank_account_number, account_name FROM users WHERE user_id = ?', [req.user_id], (err, result) => {
       if (err) {
-        console.error('Error fetching updated user data:', err);
         return res.status(500).json({ error: 'Error fetching updated user data' });
       }
 
@@ -1098,7 +1072,6 @@ app.get('/bounty-jackpot', async (req, res) => {
     `;
     db.query(lastWinQuery, (err, result) => {
       if (err) {
-        console.error('Error fetching last bounty win time:', err);
         return res.status(500).json({ error: 'Error calculating bounty prize' });
       }
 
@@ -1112,7 +1085,6 @@ app.get('/bounty-jackpot', async (req, res) => {
 
       db.query(totalBetsQuery, [PERCENTAGE, lastWinTime, lastWinTime], (err, result) => {
         if (err) {
-          console.error('Error calculating total bets:', err);
           return res.status(500).json({ error: 'Error calculating bounty prize' });
         }
 
@@ -1136,7 +1108,6 @@ app.get('/bounty-jackpot', async (req, res) => {
       });
     });
   } catch (error) {
-    console.error('Unexpected error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -1144,8 +1115,6 @@ app.get('/bounty-jackpot', async (req, res) => {
 const bonusPercentage = 0.5 / 100;  // Set to 0.5% but can be adjusted later
 
 cron.schedule('0 0 * * *', async () => {
-  console.log('Running scheduled task: Calculating referral bets and bonuses');
-
   try {
     // Query to fetch total bets grouped by referral_code
     const query = `
@@ -1159,11 +1128,8 @@ cron.schedule('0 0 * * *', async () => {
 
     db.query(query, (err, results) => {
       if (err) {
-        console.error('Error calculating referral bets:', err);
         return;
       }
-
-      console.log('Referral bet totals:', results);
 
       // Calculate referral bonus for each referral_code
       results.forEach(result => {
@@ -1177,7 +1143,7 @@ cron.schedule('0 0 * * *', async () => {
       });
     });
   } catch (error) {
-    console.error('Error during scheduled referral calculation:', error);
+      return;
   }
 });
 
@@ -1194,7 +1160,6 @@ app.get('/referral/referral-bonus', async (req, res) => {
       res.json({ success: false, message: 'No data found for this referral code' });
     }
   } catch (error) {
-    console.error('Error fetching referral bonus:', error);
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
@@ -1211,7 +1176,6 @@ app.post('/deposit', authenticate, (req, res) => {
     // Fetch user balance to include in the deposit request
     db.query('SELECT balance FROM users WHERE user_id = ?', [userId], (err, result) => {
         if (err || result.length === 0) {
-            console.error('Error fetching user balance:', err);
             return res.status(500).json({ error: 'Error fetching user data' });
         }
 
@@ -1224,7 +1188,6 @@ app.post('/deposit', authenticate, (req, res) => {
         `;
         db.query(query, [userId, username, balance, amount], (err, result) => {
             if (err) {
-                console.error('Error inserting deposit request:', err);
                 return res.status(500).json({ error: 'Error submitting deposit request' });
             }
             res.status(200).json({ message: 'Deposit request submitted successfully' });
@@ -1272,7 +1235,6 @@ app.post('/withdraw', authenticate, (req, res) => {
     // Fetch user balance and account details
     db.query('SELECT balance, bank_name, bank_account_number, account_name FROM users WHERE user_id = ?', [userId], (err, result) => {
         if (err) {
-            console.error('Error fetching user data:', err);
             return res.status(500).json({ error: 'Error fetching user data' });
         }
 
@@ -1299,7 +1261,7 @@ app.post('/withdraw', authenticate, (req, res) => {
         `;
         db.query(query, [userId, user.username, balance, amount, user.bank_name, user.bank_account_number, user.account_name], (err, result) => {
             if (err) {
-                console.error('Error inserting withdrawal request:', err);
+                // console.error('Error inserting withdrawal request:', err);
                 return res.status(500).json({ error: 'Error submitting withdrawal request' });
             }
 
@@ -1307,7 +1269,7 @@ app.post('/withdraw', authenticate, (req, res) => {
             const newBalance = balance - amount;
             db.query('UPDATE users SET balance = ? WHERE user_id = ?', [newBalance, userId], (err, result) => {
                 if (err) {
-                    console.error('Error updating user balance:', err);
+                    // console.error('Error updating user balance:', err);
                     return res.status(500).json({ error: 'Error updating user balance' });
                 }
 
