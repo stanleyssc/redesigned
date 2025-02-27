@@ -102,13 +102,14 @@ app.post('/paystack/initiate', authenticate, async (req, res) => {
     const userId = req.user_id;
 
     if (!amount || isNaN(amount) || amount <= 0) {
+        console.error('Invalid amount provided:', { amount, userId });
         return res.status(400).json({ error: 'Valid amount required' });
     }
 
     // Fetch user details
     db.query('SELECT email, username FROM users WHERE user_id = ?', [userId], async (err, result) => {
         if (err || result.length === 0) {
-            console.error('Error fetching user data:', err);
+            console.error('Error fetching user data:', { err, userId });
             return res.status(500).json({ error: 'Error fetching user data' });
         }
 
@@ -116,40 +117,18 @@ app.post('/paystack/initiate', authenticate, async (req, res) => {
         const reference = `NG_${Date.now()}_${userId}`; // Unique reference
 
         try {
-            // Optionally initiate with Paystack API to get their reference (commented out as optional)
-            /*
-            const response = await fetch('https://api.paystack.co/transaction/initialize', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    email,
-                    amount: amount * 100, // Convert to kobo
-                    reference
-                })
-            });
-            const paystackData = await response.json();
-            if (!paystackData.status) {
-                console.error('Paystack initiation failed:', paystackData);
-                return res.status(500).json({ error: 'Failed to initiate payment with Paystack' });
-            }
-            const paystackReference = paystackData.data.reference || reference;
-            */
-
             // Store pending transaction with the reference
             const query = `
                 INSERT INTO payment_transactions (user_id, username, amount, reference, status, created_at)
                 VALUES (?, ?, ?, ?, 'pending', NOW())
             `;
-            db.query(query, [userId, username, amount, reference], (err) => {
+            db.query(query, [userId, username, amount, reference], (err, result) => {
                 if (err) {
-                    console.error('Error creating transaction:', err);
+                    console.error('Error inserting transaction into database:', { err, reference, userId });
                     return res.status(500).json({ error: 'Error creating transaction' });
                 }
 
-                console.log('Transaction initiated with reference:', reference); // Debug log
+                console.log('Transaction initiated successfully:', { reference, userId, amount, insertId: result.insertId });
                 res.status(200).json({
                     reference,
                     email,
@@ -158,7 +137,7 @@ app.post('/paystack/initiate', authenticate, async (req, res) => {
                 });
             });
         } catch (error) {
-            console.error('Error initiating payment with Paystack:', error);
+            console.error('Unexpected error in payment initiation:', { error, reference, userId });
             res.status(500).json({ error: 'Server error during payment initiation' });
         }
     });
@@ -170,7 +149,7 @@ app.post('/paystack/verify', authenticate, async (req, res) => {
     const userId = req.user_id;
 
     if (!reference || typeof reference !== 'string') {
-        console.error('Invalid reference:', reference);
+        console.error('Invalid reference provided:', { reference, userId });
         return res.status(400).json({ error: 'Valid reference required' });
     }
 
@@ -186,59 +165,64 @@ app.post('/paystack/verify', authenticate, async (req, res) => {
         const data = await response.json();
         console.log('Paystack verify response:', data);
 
-        if (data.status && data.data.status === 'success') {
-            const amount = data.data.amount / 100; // Convert from kobo
-
-            db.query('SELECT user_id, amount FROM payment_transactions WHERE reference = ? AND status = "pending"', 
-                [reference], (err, result) => {
-                    if (err) {
-                        console.error('Database error:', err);
-                        return res.status(500).json({ error: 'Database error' });
-                    }
-                    if (result.length === 0) {
-                        console.error('Transaction not found:', { reference, userId });
-                        // Insert the transaction if not found (fallback for bank auth)
-                        db.query(
-                            'INSERT INTO payment_transactions (user_id, username, amount, reference, status, created_at) VALUES (?, ?, ?, ?, "pending", NOW()) ON DUPLICATE KEY UPDATE status = "pending"',
-                            [userId, data.data.customer.email.split('@')[0], amount, reference],
-                            (insertErr) => {
-                                if (insertErr) {
-                                    console.error('Error inserting fallback transaction:', insertErr);
-                                    return res.status(500).json({ error: 'Error creating fallback transaction' });
-                                }
-                                proceedWithVerification(reference, userId, amount, res);
-                            }
-                        );
-                    } else if (result[0].user_id !== userId) {
-                        console.error('Unauthorized transaction access:', { reference, userId });
-                        return res.status(403).json({ error: 'Unauthorized transaction access' });
-                    } else {
-                        proceedWithVerification(reference, userId, amount, res);
-                    }
-                });
-        } else {
-            console.error('Paystack verification failed:', data);
-            res.status(400).json({ status: 'failed', message: 'Payment verification failed' });
+        if (!data.status || data.data.status !== 'success') {
+            console.error('Paystack verification failed:', { reference, userId, data });
+            return res.status(400).json({ status: 'failed', message: 'Payment verification failed' });
         }
+
+        const amount = data.data.amount / 100; // Convert from kobo
+        const paystackUsername = data.data.customer.email.split('@')[0]; // Extract username from email
+
+        db.query('SELECT user_id, amount FROM payment_transactions WHERE reference = ? AND status = "pending"', 
+            [reference], (err, result) => {
+                if (err) {
+                    console.error('Database error during verification:', { err, reference, userId });
+                    return res.status(500).json({ error: 'Database error' });
+                }
+
+                if (result.length === 0) {
+                    console.warn('Transaction not found, inserting fallback:', { reference, userId });
+                    // Insert fallback transaction if not found, leveraging unique constraint
+                    db.query(
+                        'INSERT INTO payment_transactions (user_id, username, amount, reference, status, created_at) VALUES (?, ?, ?, ?, "pending", NOW()) ON DUPLICATE KEY UPDATE status = "pending"',
+                        [userId, paystackUsername, amount, reference],
+                        (insertErr) => {
+                            if (insertErr) {
+                                console.error('Error inserting fallback transaction:', { insertErr, reference, userId });
+                                return res.status(500).json({ error: 'Error creating fallback transaction' });
+                            }
+                            console.log('Fallback transaction inserted or updated:', { reference, userId });
+                            proceedWithVerification(reference, userId, amount, res);
+                        }
+                    );
+                } else if (result[0].user_id !== userId) {
+                    console.error('Unauthorized transaction access:', { reference, userId, foundUserId: result[0].user_id });
+                    return res.status(403).json({ error: 'Unauthorized transaction access' });
+                } else {
+                    console.log('Transaction found and authorized:', { reference, userId });
+                    proceedWithVerification(reference, userId, amount, res);
+                }
+            });
     } catch (error) {
-        console.error('Payment verification error:', error);
+        console.error('Payment verification error:', { error, reference, userId });
         res.status(500).json({ error: 'Server error during verification' });
     }
 });
 
-// Helper function to avoid duplication
+// Helper function to proceed with verification
 function proceedWithVerification(reference, userId, amount, res) {
     db.query('UPDATE payment_transactions SET status = "success" WHERE reference = ?', [reference], (err) => {
         if (err) {
-            console.error('Error updating transaction:', err);
+            console.error('Error updating transaction status:', { err, reference, userId });
             return res.status(500).json({ error: 'Error updating transaction' });
         }
 
         db.query('UPDATE users SET balance = balance + ? WHERE user_id = ?', [amount, userId], (err) => {
             if (err) {
-                console.error('Error updating balance:', err);
+                console.error('Error updating user balance:', { err, userId, amount });
                 return res.status(500).json({ error: 'Error updating balance' });
             }
+            console.log('Payment verified and balance updated:', { reference, userId, amount });
             res.status(200).json({ status: 'success', message: 'Payment verified and balance updated' });
         });
     });
@@ -246,12 +230,12 @@ function proceedWithVerification(reference, userId, amount, res) {
 
 // Paystack Webhook Handler
 app.post('/paystack/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
-    // Verify webhook signature
     const crypto = require('crypto');
     const hash = crypto.createHmac('sha512', process.env.PAYSTACK_SECRET_KEY)
         .update(JSON.stringify(req.body))
         .digest('hex');
     if (hash !== req.headers['x-paystack-signature']) {
+        console.error('Invalid webhook signature:', { received: req.headers['x-paystack-signature'], expected: hash });
         return res.status(401).json({ error: 'Invalid webhook signature' });
     }
 
@@ -264,22 +248,28 @@ app.post('/paystack/webhook', express.raw({ type: 'application/json' }), async (
         db.query('SELECT user_id, amount FROM payment_transactions WHERE reference = ? AND status = "pending"', 
             [reference], (err, result) => {
                 if (err || result.length === 0) {
+                    console.warn('Webhook: Transaction not found or already processed:', { reference });
                     return res.sendStatus(200); // Acknowledge but don't process
                 }
 
                 const { user_id } = result[0];
 
-                // Update transaction and balance
                 db.query('UPDATE payment_transactions SET status = "success" WHERE reference = ?', [reference], (err) => {
-                    if (err) console.error('Webhook transaction update error:', err);
+                    if (err) {
+                        console.error('Webhook transaction update error:', { err, reference });
+                    }
 
                     db.query('UPDATE users SET balance = balance + ? WHERE user_id = ?', [amount, user_id], (err) => {
-                        if (err) console.error('Webhook balance update error:', err);
-                        res.sendStatus(200); // Acknowledge webhook
+                        if (err) {
+                            console.error('Webhook balance update error:', { err, user_id, amount });
+                        }
+                        console.log('Webhook: Payment verified and balance updated:', { reference, user_id, amount });
+                        res.sendStatus(200);
                     });
                 });
             });
     } else {
+        console.log('Webhook event ignored:', { event: event.event });
         res.sendStatus(200); // Acknowledge other events
     }
 });
