@@ -135,13 +135,13 @@ app.post('/paystack/initiate', authenticate, async (req, res) => {
     });
 });
 
-// Verify Payment (called from frontend callback)
 app.post('/paystack/verify', authenticate, async (req, res) => {
     const { reference } = req.body;
     const userId = req.user_id;
 
-    if (!reference) {
-        return res.status(400).json({ error: 'Reference required' });
+    if (!reference || typeof reference !== 'string') {
+        console.error('Invalid reference:', reference);
+        return res.status(400).json({ error: 'Valid reference required' });
     }
 
     try {
@@ -154,18 +154,22 @@ app.post('/paystack/verify', authenticate, async (req, res) => {
         });
 
         const data = await response.json();
+        console.log('Paystack verify response:', data); // Debug log
 
         if (data.status && data.data.status === 'success') {
-            const amount = data.data.amount / 100; // Convert from kobo to NGN
+            const amount = data.data.amount / 100; // Convert from kobo
 
-            // Verify this transaction belongs to the user
             db.query('SELECT user_id, amount FROM payment_transactions WHERE reference = ? AND status = "pending"', 
                 [reference], (err, result) => {
-                    if (err || result.length === 0 || result[0].user_id !== userId) {
+                    if (err) {
+                        console.error('Database error:', err);
+                        return res.status(500).json({ error: 'Database error' });
+                    }
+                    if (result.length === 0 || result[0].user_id !== userId) {
+                        console.error('Transaction not found or unauthorized:', { reference, userId });
                         return res.status(400).json({ error: 'Invalid or already processed transaction' });
                     }
 
-                    // Update transaction status and user balance
                     db.query('UPDATE payment_transactions SET status = "success" WHERE reference = ?', [reference], (err) => {
                         if (err) return res.status(500).json({ error: 'Error updating transaction' });
 
@@ -176,6 +180,7 @@ app.post('/paystack/verify', authenticate, async (req, res) => {
                     });
                 });
         } else {
+            console.error('Paystack verification failed:', data);
             res.status(400).json({ status: 'failed', message: 'Payment verification failed' });
         }
     } catch (error) {
@@ -813,6 +818,7 @@ app.post('/register', async (req, res) => {
                 return res.status(500).json({ error: 'Error retrieving user data' });
             }
             const user = result[0];
+            console.log('User registered');
             res.status(201).json({
                 message: 'User registered successfully',
                 token,
