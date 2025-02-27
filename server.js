@@ -285,6 +285,31 @@ app.post('/login', (req, res) => {
     });
 });
 
+app.get('/user', authenticate, (req, res) => {
+  db.query('SELECT user_id, username, email, phone_number, balance, referralCode, bank_name, bank_account_number, account_name FROM users WHERE user_id = ?', [req.user_id], (err, result) => {
+    if (err) {
+      console.error('Database error:', err);
+      return res.status(500).json({ error: 'Error fetching user details' });
+    }
+    if (result.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const user = result[0];
+    res.status(200).json({
+      user_id: user.user_id,
+      username: user.username,
+      email: user.email,
+      phone_number: user.phone_number,
+      balance: user.balance,
+      referralCode: user.referralCode,
+      bank_name: user.bank_name,
+      bank_account_number: user.bank_account_number,
+      account_name: user.account_name
+    });
+  });
+});
+
 // Create Admin Endpoint
 app.post(`${ADMIN_PATH}/create-admin`, authenticateAdmin, onlySuperAdmin, async (req, res) => {
   const { username, password, email, role } = req.body;
@@ -376,16 +401,6 @@ app.post('/tournaments', authenticate, (req, res) => {
         }
         res.status(201).json({ message: 'Tournament created', id: result.insertId });
     });
-});
-
-// User details endpoint
-app.get('/user', authenticate, (req, res) => {
-  db.query('SELECT username, balance FROM users WHERE user_id = ?', [req.user_id], (err, result) => {
-    if (err || result.length === 0) {
-      return res.status(500).json({ error: 'Error fetching user details' });
-    }
-    res.status(200).json(result[0]);
-  });
 });
 
 // Transactions: Deposits with Filtering and Pagination
@@ -1023,34 +1038,6 @@ app.get('/winners', (req, res) => {
   });
 });
 
-// Fetch user profile data
-app.get('/user-info', authenticate, (req, res) => {
-  const userId = req.user_id; 
-
-  db.query('SELECT * FROM users WHERE user_id = ?', [userId], (err, result) => {
-    if (err) {
-      return res.status(500).json({ error: 'Error fetching user profile' });
-    }
-
-    if (result.length === 0) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-    
-    const user = result[0];
-    res.status(200).json({
-      user_id: user.user_id,
-      referralCode: user.referralCode,
-      username: user.username,
-      email: user.email,
-      phone_number: user.phone_number,
-      bank_name: user.bank_name,
-      bank_account_number: user.bank_account_number,
-      account_name: user.account_name,
-      balance: user.balance
-    });
-  });
-});
-
 // Admin-only endpoint for deposits and withdrawals
 app.post('/transaction', (req, res) => {
   const { adminSecret, userId, type, amount } = req.body;
@@ -1291,37 +1278,6 @@ app.get('/referral/referral-bonus', async (req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
-});
-
-
-app.post('/deposit', authenticate, (req, res) => {
-    const { username, amount } = req.body;
-    const userId = req.user_id; // Extracted from the token
-
-    if (!username || !amount || isNaN(amount) || amount <= 0) {
-        return res.status(400).json({ error: 'Invalid username or amount' });
-    }
-
-    // Fetch user balance to include in the deposit request
-    db.query('SELECT balance FROM users WHERE user_id = ?', [userId], (err, result) => {
-        if (err || result.length === 0) {
-            return res.status(500).json({ error: 'Error fetching user data' });
-        }
-
-        const balance = result[0].balance;
-
-        // Insert deposit request into the database
-        const query = `
-            INSERT INTO deposit_requests (user_id, username, balance, amount, status)
-            VALUES (?, ?, ?, ?, 'pending')
-        `;
-        db.query(query, [userId, username, balance, amount], (err, result) => {
-            if (err) {
-                return res.status(500).json({ error: 'Error submitting deposit request' });
-            }
-            res.status(200).json({ message: 'Deposit request submitted successfully' });
-        });
-    });
 });
 
 // POST /tournaments (Admin only)
