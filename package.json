@@ -4,6 +4,7 @@
     "bcryptjs": "^2.4.3",
     "aws-sdk": "^2.x.x",
     "@aws-sdk/client-ses": "^3.x.x",
+    "node-fetch": "^2.x.x",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
