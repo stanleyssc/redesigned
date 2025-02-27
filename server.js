@@ -106,35 +106,65 @@ app.post('/paystack/initiate', authenticate, async (req, res) => {
     }
 
     // Fetch user details
-    db.query('SELECT email, username FROM users WHERE user_id = ?', [userId], (err, result) => {
+    db.query('SELECT email, username FROM users WHERE user_id = ?', [userId], async (err, result) => {
         if (err || result.length === 0) {
+            console.error('Error fetching user data:', err);
             return res.status(500).json({ error: 'Error fetching user data' });
         }
 
         const { email, username } = result[0];
         const reference = `NG_${Date.now()}_${userId}`; // Unique reference
 
-        // Store pending transaction
-        const query = `
-            INSERT INTO payment_transactions (user_id, username, amount, reference, status, created_at)
-            VALUES (?, ?, ?, ?, 'pending', NOW())
-        `;
-        db.query(query, [userId, username, amount, reference], async (err) => {
-            if (err) {
-                return res.status(500).json({ error: 'Error creating transaction' });
-            }
-
-            // Return payment details to frontend
-            res.status(200).json({
-                reference,
-                email,
-                amount: amount * 100, // Convert to kobo for Paystack
-                publicKey: process.env.PAYSTACK_PUBLIC_KEY
+        try {
+            // Optionally initiate with Paystack API to get their reference (commented out as optional)
+            /*
+            const response = await fetch('https://api.paystack.co/transaction/initialize', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    email,
+                    amount: amount * 100, // Convert to kobo
+                    reference
+                })
             });
-        });
+            const paystackData = await response.json();
+            if (!paystackData.status) {
+                console.error('Paystack initiation failed:', paystackData);
+                return res.status(500).json({ error: 'Failed to initiate payment with Paystack' });
+            }
+            const paystackReference = paystackData.data.reference || reference;
+            */
+
+            // Store pending transaction with the reference
+            const query = `
+                INSERT INTO payment_transactions (user_id, username, amount, reference, status, created_at)
+                VALUES (?, ?, ?, ?, 'pending', NOW())
+            `;
+            db.query(query, [userId, username, amount, reference], (err) => {
+                if (err) {
+                    console.error('Error creating transaction:', err);
+                    return res.status(500).json({ error: 'Error creating transaction' });
+                }
+
+                console.log('Transaction initiated with reference:', reference); // Debug log
+                res.status(200).json({
+                    reference,
+                    email,
+                    amount: amount * 100, // Convert to kobo for Paystack
+                    publicKey: process.env.PAYSTACK_PUBLIC_KEY
+                });
+            });
+        } catch (error) {
+            console.error('Error initiating payment with Paystack:', error);
+            res.status(500).json({ error: 'Server error during payment initiation' });
+        }
     });
 });
 
+// Verify Payment
 app.post('/paystack/verify', authenticate, async (req, res) => {
     const { reference } = req.body;
     const userId = req.user_id;
@@ -154,7 +184,7 @@ app.post('/paystack/verify', authenticate, async (req, res) => {
         });
 
         const data = await response.json();
-        console.log('Paystack verify response:', data); // Debug log
+        console.log('Paystack verify response:', data);
 
         if (data.status && data.data.status === 'success') {
             const amount = data.data.amount / 100; // Convert from kobo
@@ -165,19 +195,26 @@ app.post('/paystack/verify', authenticate, async (req, res) => {
                         console.error('Database error:', err);
                         return res.status(500).json({ error: 'Database error' });
                     }
-                    if (result.length === 0 || result[0].user_id !== userId) {
-                        console.error('Transaction not found or unauthorized:', { reference, userId });
-                        return res.status(400).json({ error: 'Invalid or already processed transaction' });
+                    if (result.length === 0) {
+                        console.error('Transaction not found:', { reference, userId });
+                        // Insert the transaction if not found (fallback for bank auth)
+                        db.query(
+                            'INSERT INTO payment_transactions (user_id, username, amount, reference, status, created_at) VALUES (?, ?, ?, ?, "pending", NOW()) ON DUPLICATE KEY UPDATE status = "pending"',
+                            [userId, data.data.customer.email.split('@')[0], amount, reference],
+                            (insertErr) => {
+                                if (insertErr) {
+                                    console.error('Error inserting fallback transaction:', insertErr);
+                                    return res.status(500).json({ error: 'Error creating fallback transaction' });
+                                }
+                                proceedWithVerification(reference, userId, amount, res);
+                            }
+                        );
+                    } else if (result[0].user_id !== userId) {
+                        console.error('Unauthorized transaction access:', { reference, userId });
+                        return res.status(403).json({ error: 'Unauthorized transaction access' });
+                    } else {
+                        proceedWithVerification(reference, userId, amount, res);
                     }
-
-                    db.query('UPDATE payment_transactions SET status = "success" WHERE reference = ?', [reference], (err) => {
-                        if (err) return res.status(500).json({ error: 'Error updating transaction' });
-
-                        db.query('UPDATE users SET balance = balance + ? WHERE user_id = ?', [amount, userId], (err) => {
-                            if (err) return res.status(500).json({ error: 'Error updating balance' });
-                            res.status(200).json({ status: 'success', message: 'Payment verified and balance updated' });
-                        });
-                    });
                 });
         } else {
             console.error('Paystack verification failed:', data);
@@ -188,6 +225,24 @@ app.post('/paystack/verify', authenticate, async (req, res) => {
         res.status(500).json({ error: 'Server error during verification' });
     }
 });
+
+// Helper function to avoid duplication
+function proceedWithVerification(reference, userId, amount, res) {
+    db.query('UPDATE payment_transactions SET status = "success" WHERE reference = ?', [reference], (err) => {
+        if (err) {
+            console.error('Error updating transaction:', err);
+            return res.status(500).json({ error: 'Error updating transaction' });
+        }
+
+        db.query('UPDATE users SET balance = balance + ? WHERE user_id = ?', [amount, userId], (err) => {
+            if (err) {
+                console.error('Error updating balance:', err);
+                return res.status(500).json({ error: 'Error updating balance' });
+            }
+            res.status(200).json({ status: 'success', message: 'Payment verified and balance updated' });
+        });
+    });
+}
 
 // Paystack Webhook Handler
 app.post('/paystack/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
